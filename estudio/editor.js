@@ -7,7 +7,7 @@ const $$ = s => [...document.querySelectorAll(s)];
 const F = fabric;
 
 // Propiedades propias que se guardan con cada elemento.
-const EXTRA = ['id', 'nombre', 'bloqueado', 'lockMovementX', 'lockMovementY', 'lockScalingX', 'lockScalingY', 'lockRotation', 'hasControls'];
+const EXTRA = ['id', 'nombre', 'bloqueado', 'lockMovementX', 'lockMovementY', 'lockScalingX', 'lockScalingY', 'lockRotation', 'hasControls', 'trazo', 'perPixelTargetFind'];
 const FORMATOS = [
   { n: 'Instagram cuadrado', w: 1080, h: 1080 }, { n: 'Instagram vertical', w: 1080, h: 1350 },
   { n: 'Historia / Reel', w: 1080, h: 1920 }, { n: 'Presentación 16:9', w: 1920, h: 1080 },
@@ -32,7 +32,7 @@ Object.assign(F.InteractiveFabricObject.ownDefaults, {
   transparentCorners: false, cornerSize: 12, touchCornerSize: 34, borderScaleFactor: 1.5, padding: 2,
 });
 const canvas = new F.Canvas('lienzo', {
-  preserveObjectStacking: true, fireRightClick: true, stopContextMenu: true, controlsAboveOverlay: true,
+  preserveObjectStacking: true, fireRightClick: true, stopContextMenu: true, controlsAboveOverlay: true, targetFindTolerance: 6,
   selectionColor: 'rgba(200,100,59,.08)', selectionBorderColor: '#c8643b', selectionLineWidth: 1,
 });
 const mesa = $('#mesa');
@@ -92,7 +92,7 @@ function medirMesa() {
   canvas.setDimensions({ width: mesa.clientWidth, height: mesa.clientHeight });
   canvas.requestRenderAll();
 }
-new ResizeObserver(() => { const primera = !canvas.width || canvas.width === 300; medirMesa(); if (primera) ajustarVista(); }).observe(mesa);
+new ResizeObserver(() => { const primera = canvas.width < 50 || canvas.height < 50 || canvas.width === 300; medirMesa(); if (primera) ajustarVista(); }).observe(mesa);
 
 // ---------- Vista: zoom y desplazamiento ----------
 function ajustarVista() {
@@ -121,13 +121,15 @@ let espacio = false, arrastreVista = null;
 function ponerHerramienta(h) {
   herramienta = h;
   $$('[data-herr]').forEach(b => b.classList.toggle('activo', b.dataset.herr === h));
+  if (dibujando()) { canvas.discardActiveObject(); canvas.requestRenderAll(); }
   aplicarModoMano();
+  refrescarPanel();
 }
 function aplicarModoMano() {
   const mano = herramienta === 'mano' || espacio;
-  canvas.selection = !mano;
-  canvas.skipTargetFind = mano;
-  canvas.defaultCursor = mano ? 'grab' : 'default';
+  canvas.selection = !mano && !dibujando();
+  canvas.skipTargetFind = mano || dibujando();
+  canvas.defaultCursor = mano ? 'grab' : dibujando() ? 'crosshair' : 'default';
   canvas.setCursor(canvas.defaultCursor);
 }
 canvas.on('mouse:down', opt => {
@@ -175,6 +177,102 @@ mesa.addEventListener('pointermove', e => {
 const finToque = e => { toques.delete(e.pointerId); if (toques.size < 2 && pellizco) { pellizco = null; aplicarModoMano(); } };
 mesa.addEventListener('pointerup', finToque, true);
 mesa.addEventListener('pointercancel', finToque, true);
+
+// ---------- Dibujo a mano (Apple Pencil, dedo o ratón) ----------
+// Mientras dibujas, el trazo se pinta en la capa superior del lienzo (rápido); al levantar el lápiz se convierte
+// en un elemento vectorial editable.
+let pincelAj = Trazo.ajustes('casadrew_pincel', { pincel: 'tinta', color: '#1a1a1a', tam: 10, opacidad: 100, estab: 50, soloLapiz: true });
+let dibujo = null, panDedo = null, borrando = null, borradoAlgo = false, pintadoPendiente = false;
+function dibujando() { return herramienta === 'pincel' || herramienta === 'borrador'; }
+const pincelActual = () => Trazo.PINCELES[pincelAj.pincel] || Trazo.PINCELES.tinta;
+const opcionesPincel = conPresion => Trazo.opciones(pincelActual(), { tam: pincelAj.tam, estabilizar: pincelAj.estab / 100, conPresion });
+const opacidadPincel = () => pincelAj.opacidad / 100 * (pincelActual().opacidad ?? 1);
+
+mesa.addEventListener('pointerdown', e => {
+  if (!dibujando() || espacio || e.button > 0) return;
+  e.stopPropagation(); e.preventDefault();
+  try { mesa.setPointerCapture(e.pointerId); } catch {}
+  if (e.pointerType === 'touch' && (pincelAj.soloLapiz || toques.size > 1)) {
+    if (dibujo && !dibujo.pen) cancelarTrazo();
+    panDedo = toques.size > 1 ? null : { id: e.pointerId, x: e.clientX, y: e.clientY };
+    return;
+  }
+  if (herramienta === 'borrador') { borrando = e.pointerId; borradoAlgo = false; borrarEn(e); return; }
+  const p = canvas.getScenePoint(e);
+  dibujo = { id: e.pointerId, pen: Trazo.hayPresion(e), puntos: [Trazo.punto(e, p.x, p.y, pincelActual())] };
+  pedirPintado();
+}, true);
+mesa.addEventListener('pointermove', e => {
+  if (!dibujando()) return;
+  e.stopPropagation();
+  if (panDedo && e.pointerId === panDedo.id) {
+    if (toques.size < 2) {
+      canvas.relativePan(new F.Point(e.clientX - panDedo.x, e.clientY - panDedo.y));
+      canvas.requestRenderAll();
+    }
+    panDedo.x = e.clientX; panDedo.y = e.clientY;
+    return;
+  }
+  if (borrando === e.pointerId) return borrarEn(e);
+  if (!dibujo || e.pointerId !== dibujo.id) return;
+  for (const ev of Trazo.eventos(e)) {
+    const p = canvas.getScenePoint(ev);
+    dibujo.puntos.push(Trazo.punto(ev, p.x, p.y, pincelActual()));
+  }
+  pedirPintado();
+}, true);
+const finDibujo = e => {
+  if (!dibujando()) return;
+  if (panDedo?.id === e.pointerId) panDedo = null;
+  if (borrando === e.pointerId) { borrando = null; if (borradoAlgo) registrar(); }
+  if (dibujo && dibujo.id === e.pointerId) e.type === 'pointerup' ? cerrarTrazo() : cancelarTrazo();
+};
+mesa.addEventListener('pointerup', finDibujo, true);
+mesa.addEventListener('pointercancel', finDibujo, true);
+
+function pedirPintado() { if (!pintadoPendiente) { pintadoPendiente = true; requestAnimationFrame(pintarVivo); } }
+function pintarVivo() {
+  pintadoPendiente = false;
+  const ctx = canvas.contextTop;
+  canvas.clearContext(ctx);
+  if (!dibujo) return;
+  const d = Trazo.aSVG(dibujo.puntos, opcionesPincel(dibujo.pen));
+  if (!d) return;
+  const v = canvas.viewportTransform;
+  ctx.save();
+  ctx.transform(v[0], v[1], v[2], v[3], v[4], v[5]);
+  ctx.globalAlpha = opacidadPincel();
+  ctx.fillStyle = pincelAj.color;
+  ctx.fill(new Path2D(d));
+  ctx.restore();
+}
+function cancelarTrazo() { dibujo = null; pedirPintado(); }
+function cerrarTrazo() {
+  const d = Trazo.aSVG(dibujo.puntos, opcionesPincel(dibujo.pen));
+  dibujo = null;
+  pedirPintado();
+  if (!d) return;
+  canvas.add(new F.Path(d, { fill: pincelAj.color, opacity: opacidadPincel(), strokeWidth: 0, nombre: 'Trazo · ' + pincelActual().n,
+    globalCompositeOperation: pincelActual().fusion || 'source-over', trazo: true, perPixelTargetFind: true }));
+}
+// El borrador quita trazos enteros (no formas ni imágenes), comprobando el píxel real bajo el lápiz.
+function borrarEn(e) {
+  const p = canvas.getScenePoint(e), vp = canvas.getViewportPoint(e);
+  for (const o of canvas.getObjects().slice()) {
+    if (!o.trazo || !o.visible || o.bloqueado) continue;
+    if (o.containsPoint(p) && !canvas.isTargetTransparent(o, vp.x, vp.y)) {
+      historia.pausa = true; canvas.remove(o); historia.pausa = false;
+      borradoAlgo = true;
+    }
+  }
+}
+
+function refrescarPincel() {
+  $$('#pinceles button').forEach(b => b.classList.toggle('activo', b.dataset.pincel === pincelAj.pincel));
+  $('#pColor').value = pincelAj.color; $('#pTam').value = pincelAj.tam; $('#pTamTxt').textContent = pincelAj.tam + ' px';
+  $('#pOpac').value = pincelAj.opacidad; $('#pEstab').value = pincelAj.estab; $('#pSoloLapiz').checked = pincelAj.soloLapiz;
+}
+function cambiarPincel(cambios) { Object.assign(pincelAj, cambios); Trazo.guardarAjustes('casadrew_pincel', pincelAj); refrescarPincel(); }
 
 // ---------- Imán y guías inteligentes ----------
 canvas.on('object:moving', ({ target: o }) => {
@@ -577,6 +675,7 @@ document.addEventListener('keydown', e => {
     return hacer(registrarLuego);
   }
   const atajo = { v: () => ponerHerramienta('seleccion'), h: () => ponerHerramienta('mano'),
+    b: () => ponerHerramienta('pincel'), x: () => ponerHerramienta('borrador'),
     t: () => colocar(CREAR.texto()), r: () => colocar(CREAR.rect()), e: () => colocar(CREAR.elipse()), l: () => colocar(CREAR.linea()) }[k];
   if (atajo) hacer(atajo);
 });
@@ -613,6 +712,9 @@ function refrescarTodo() { refrescarPanel(); refrescarCapas(); $('#nombreDoc').v
 
 function refrescarPanel() {
   const objs = activos(), o = canvas.getActiveObject();
+  $('#pPincel').hidden = !dibujando();
+  $('#pTituloPincel').textContent = herramienta === 'borrador' ? 'Borrador de trazos' : 'Pincel';
+  $('#gAjustesPincel').hidden = herramienta === 'borrador';
   $('#pObjeto').hidden = !o; $('#pOrganizar').hidden = !o; $('#pDoc').hidden = !!o;
   $('#dAncho').value = doc.w; $('#dAlto').value = doc.h;
   $('#dFondo').value = aHex(doc.fondo || '#ffffff'); $('#dTransp').checked = !doc.fondo;
@@ -725,6 +827,21 @@ canvas.on('selection:cleared', refrescarTodo);
 canvas.on('object:scaling', refrescarPanel);
 canvas.on('object:rotating', refrescarPanel);
 canvas.on('object:moving', refrescarPanel);
+
+// Pincel: elegir tipo, color, tamaño, opacidad y estabilización (se recuerdan en este aparato).
+$('#pinceles').append(...Object.entries(Trazo.PINCELES).map(([clave, p]) => {
+  const b = Object.assign(document.createElement('button'), { type: 'button', textContent: p.n });
+  b.dataset.pincel = clave;
+  b.onclick = () => cambiarPincel({ pincel: clave, tam: Math.round(p.tam * Math.max(1, Math.max(doc.w, doc.h) / 1080)) });
+  return b;
+}));
+$('#pColor').oninput = e => cambiarPincel({ color: e.target.value });
+$('#pTam').oninput = e => cambiarPincel({ tam: +e.target.value });
+$('#pOpac').oninput = e => cambiarPincel({ opacidad: +e.target.value });
+$('#pEstab').oninput = e => cambiarPincel({ estab: +e.target.value });
+$('#pSoloLapiz').onchange = e => cambiarPincel({ soloLapiz: e.target.checked });
+$('#bFirma').onclick = async () => { await guardarYa(); location.href = 'firma.html'; };
+refrescarPincel();
 
 // ---------- Capas ----------
 function refrescarCapas() {
@@ -840,4 +957,17 @@ async function abrirProyecto(archivo) {
   }
   ajustarVista();
   ponerEstado(abierto ? 'Diseño recuperado' : 'Listo');
+  await traerFirma();
 })();
+
+// Firma hecha en firma.html y enviada con «Usar en mi diseño».
+async function traerFirma() {
+  let svg = '';
+  try { svg = localStorage.getItem('casadrew_firma_pendiente') || ''; localStorage.removeItem('casadrew_firma_pendiente'); } catch {}
+  if (!svg) return;
+  if ($('#dNuevo').open) $('#dNuevo').close();
+  const { objects, options } = await F.loadSVGFromString(svg);
+  const g = F.util.groupSVGElements(objects.filter(Boolean), options);
+  g.scale(Math.min(1, doc.w * .5 / g.width, doc.h * .3 / g.height));
+  colocar(g, 'Firma');
+}

@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1a1a1a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>CASADREW · Firma</title>
+<link rel="stylesheet" href="estilo.css">
+<style>
+  .hoja { flex:1; position:relative; background:var(--mesa); touch-action:none; -webkit-touch-callout:none; padding:16px; display:flex; }
+  .papel { flex:1; position:relative; background:#fff; border-radius:14px; box-shadow:0 8px 28px rgba(0,0,0,.12); overflow:hidden; }
+  .papel canvas { position:absolute; inset:0; width:100%; height:100%; touch-action:none; }
+  .guia { position:absolute; left:8%; right:8%; bottom:28%; border-top:2px dashed #d8cfc3; pointer-events:none; }
+  .guia::before { content:'✕'; position:absolute; left:-22px; top:-14px; color:#b9ad9f; font-size:18px; }
+  .ayuda { position:absolute; left:0; right:0; top:38%; text-align:center; color:#b9ad9f; font-size:1.1rem; pointer-events:none; }
+  .controles { display:flex; flex-wrap:wrap; align-items:center; gap:10px 16px; padding:10px 14px; background:var(--tarjeta); border-top:1px solid var(--linea); }
+  .controles label { display:flex; align-items:center; gap:6px; color:var(--suave); font-size:.85rem; }
+  .colores { display:flex; gap:6px; }
+  .colores button { width:30px; min-width:30px; height:30px; border-radius:50%; border:2px solid var(--linea); padding:0; }
+  .colores button.activo { outline:2px solid var(--acento); outline-offset:2px; }
+</style>
+</head>
+<body>
+<header class="barra">
+  <a class="marca" href="./" title="Volver al estudio">CASA<span>DREW</span></a>
+  <strong>Firma</strong>
+  <div class="grupo">
+    <button id="bDeshacer" title="Deshacer el último trazo"><svg><use href="#i-deshacer"/></svg></button>
+    <button id="bRehacer" title="Rehacer"><svg><use href="#i-rehacer"/></svg></button>
+    <button id="bLimpiar" class="texto">Borrar todo</button>
+  </div>
+  <span class="relleno"></span>
+  <button id="bPng" class="texto" title="Imagen con fondo transparente, a alta resolución">PNG</button>
+  <button id="bSvg" class="texto" title="Vectorial: se amplía sin perder calidad">SVG</button>
+  <button id="bUsar" class="principal">Usar en mi diseño</button>
+</header>
+
+<main class="hoja">
+  <div class="papel" id="papel">
+    <div class="guia"></div>
+    <p class="ayuda" id="ayuda">Firma aquí con el Apple Pencil, el dedo o el ratón</p>
+    <canvas id="lienzo"></canvas>
+  </div>
+</main>
+
+<div class="controles">
+  <div class="colores" id="colores"></div>
+  <label>Otro <input id="color" type="color" value="#1a1a1a"></label>
+  <label>Grosor <input id="grosor" type="range" min="2" max="24"></label>
+  <label title="Más alto = trazo más suave, con algo más de retraso">Estabilizar <input id="estab" type="range" min="0" max="95"></label>
+  <label><input id="soloLapiz" type="checkbox"> Solo el lápiz firma</label>
+</div>
+<footer class="pie"><span id="estado">La firma se exporta recortada y con fondo transparente.</span><span></span></footer>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <symbol id="i-deshacer" viewBox="0 0 24 24"><path d="M9 14L4 9l5-5M4 9h10.5a5.5 5.5 0 010 11H11"/></symbol>
+  <symbol id="i-rehacer" viewBox="0 0 24 24"><path d="M15 14l5-5-5-5m5 5H9.5a5.5 5.5 0 000 11H13"/></symbol>
+</defs></svg>
+
+<script src="lib/perfect-freehand-1.2.2.js"></script>
+<script src="trazo.js"></script>
+<script>
+'use strict';
+const $ = s => document.querySelector(s);
+// Las firmas usan el pincel "tinta" (afinado en los extremos), pero con su propio grosor y color.
+const PINCEL = { ...Trazo.PINCELES.tinta, thinning: .6 };
+const COLORES = ['#1a1a1a', '#1f3a8a', '#0b5cad', '#7a1f1f'];
+const aj = Trazo.ajustes('casadrew_firma', { color: '#1a1a1a', grosor: 7, estab: 60, soloLapiz: false });
+const lienzo = $('#lienzo'), ctx = lienzo.getContext('2d'), papel = $('#papel');
+let trazos = [], deshechos = [], actual = null, pendiente = false;
+
+function medir() {
+  const dpr = window.devicePixelRatio || 1, r = papel.getBoundingClientRect();
+  lienzo.width = Math.round(r.width * dpr); lienzo.height = Math.round(r.height * dpr);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  pintar();
+}
+new ResizeObserver(medir).observe(papel);
+
+const opciones = t => Trazo.opciones(PINCEL, { tam: t.grosor, estabilizar: t.estab / 100, conPresion: t.pen });
+function pintar() {
+  pendiente = false;
+  ctx.clearRect(0, 0, lienzo.width, lienzo.height);
+  for (const t of actual ? [...trazos, actual] : trazos) {
+    const d = Trazo.aSVG(t.puntos, opciones(t));
+    if (d) { ctx.fillStyle = t.color; ctx.fill(new Path2D(d)); }
+  }
+  $('#ayuda').hidden = trazos.length > 0 || !!actual;
+  $('#bDeshacer').disabled = !trazos.length; $('#bRehacer').disabled = !deshechos.length;
+}
+const pedir = () => { if (!pendiente) { pendiente = true; requestAnimationFrame(pintar); } };
+
+function punto(e) { const r = lienzo.getBoundingClientRect(); return Trazo.punto(e, e.clientX - r.left, e.clientY - r.top, PINCEL); }
+lienzo.addEventListener('pointerdown', e => {
+  if (e.button > 0 || (aj.soloLapiz && e.pointerType !== 'pen')) return;
+  e.preventDefault();
+  try { lienzo.setPointerCapture(e.pointerId); } catch {}
+  actual = { id: e.pointerId, pen: Trazo.hayPresion(e), color: aj.color, grosor: aj.grosor, estab: aj.estab, puntos: [punto(e)] };
+  pedir();
+});
+lienzo.addEventListener('pointermove', e => {
+  if (!actual || e.pointerId !== actual.id) return;
+  for (const ev of Trazo.eventos(e)) actual.puntos.push(punto(ev));
+  pedir();
+});
+const fin = e => {
+  if (!actual || e.pointerId !== actual.id) return;
+  if (e.type === 'pointerup') { delete actual.id; trazos.push(actual); deshechos = []; guardarBorrador(); }
+  actual = null; pedir();
+};
+lienzo.addEventListener('pointerup', fin);
+lienzo.addEventListener('pointercancel', fin);
+
+$('#bDeshacer').onclick = () => { if (trazos.length) { deshechos.push(trazos.pop()); guardarBorrador(); pintar(); } };
+$('#bRehacer').onclick = () => { if (deshechos.length) { trazos.push(deshechos.pop()); guardarBorrador(); pintar(); } };
+$('#bLimpiar').onclick = () => { if (trazos.length) { deshechos = trazos.reverse(); trazos = []; guardarBorrador(); pintar(); } };
+document.addEventListener('keydown', e => {
+  if (!(e.ctrlKey || e.metaKey) || e.key.toLowerCase() !== 'z' && e.key.toLowerCase() !== 'y') return;
+  e.preventDefault();
+  (e.shiftKey || e.key.toLowerCase() === 'y' ? $('#bRehacer') : $('#bDeshacer')).click();
+});
+
+// La firma a medio hacer se conserva si cierras la página.
+function guardarBorrador() { try { localStorage.setItem('casadrew_firma_borrador', JSON.stringify(trazos)); } catch {} }
+try { trazos = JSON.parse(localStorage.getItem('casadrew_firma_borrador') || '[]'); } catch { trazos = []; }
+
+// Ajustes
+$('#colores').append(...COLORES.map(c => {
+  const b = Object.assign(document.createElement('button'), { title: c });
+  b.style.background = c; b.dataset.color = c;
+  b.onclick = () => cambiar({ color: c });
+  return b;
+}));
+function cambiar(c) { Object.assign(aj, c); Trazo.guardarAjustes('casadrew_firma', aj); refrescar(); }
+function refrescar() {
+  document.querySelectorAll('#colores button').forEach(b => b.classList.toggle('activo', b.dataset.color === aj.color));
+  $('#color').value = aj.color; $('#grosor').value = aj.grosor; $('#estab').value = aj.estab; $('#soloLapiz').checked = aj.soloLapiz;
+}
+$('#color').oninput = e => cambiar({ color: e.target.value });
+$('#grosor').oninput = e => cambiar({ grosor: +e.target.value });
+$('#estab').oninput = e => cambiar({ estab: +e.target.value });
+$('#soloLapiz').onchange = e => cambiar({ soloLapiz: e.target.checked });
+refrescar();
+
+// Exportar: recorta al contenido con un pequeño margen.
+function caja() {
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  const formas = trazos.map(t => {
+    for (const [x, y] of PerfectFreehand.getStroke(t.puntos, opciones(t))) {
+      x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y);
+    }
+    return { d: Trazo.aSVG(t.puntos, opciones(t)), color: t.color };
+  }).filter(f => f.d);
+  const m = 8;
+  return { formas, x: x0 - m, y: y0 - m, w: x1 - x0 + 2 * m, h: y1 - y0 + 2 * m };
+}
+function aSVG() {
+  const c = caja();
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${c.x.toFixed(1)} ${c.y.toFixed(1)} ${c.w.toFixed(1)} ${c.h.toFixed(1)}" width="${Math.round(c.w)}" height="${Math.round(c.h)}">\n`
+    + c.formas.map(f => `<path d="${f.d}" fill="${f.color}"/>`).join('\n') + '\n</svg>';
+}
+function aPNG(escala = 4) {
+  const c = caja(), el = document.createElement('canvas');
+  el.width = Math.ceil(c.w * escala); el.height = Math.ceil(c.h * escala);
+  const x = el.getContext('2d');
+  x.setTransform(escala, 0, 0, escala, -c.x * escala, -c.y * escala);
+  for (const f of c.formas) { x.fillStyle = f.color; x.fill(new Path2D(f.d)); }
+  return el;
+}
+function descargar(nombre, url) {
+  const a = Object.assign(document.createElement('a'), { href: url, download: nombre });
+  document.body.append(a); a.click(); a.remove();
+}
+const hayFirma = () => { if (trazos.length) return true; $('#estado').textContent = 'Primero firma en el recuadro.'; return false; };
+$('#bPng').onclick = () => {
+  if (!hayFirma()) return;
+  const el = aPNG();
+  descargar('firma.png', el.toDataURL('image/png'));
+  $('#estado').textContent = `PNG transparente de ${el.width} × ${el.height} px descargado.`;
+};
+$('#bSvg').onclick = () => {
+  if (!hayFirma()) return;
+  const url = URL.createObjectURL(new Blob([aSVG()], { type: 'image/svg+xml' }));
+  descargar('firma.svg', url); setTimeout(() => URL.revokeObjectURL(url), 5000);
+  $('#estado').textContent = 'SVG descargado.';
+};
+$('#bUsar').onclick = () => {
+  if (!hayFirma()) return;
+  try { localStorage.setItem('casadrew_firma_pendiente', aSVG()); } catch { return $('#estado').textContent = 'No se pudo pasar la firma al diseño.'; }
+  location.href = './';
+};
+</script>
+</body>
+</html>

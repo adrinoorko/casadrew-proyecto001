@@ -321,6 +321,7 @@ function recorrerImagenes(objs, f) {
   for (const o of objs || []) {
     if (/^image$/i.test(o.type)) f(o);
     if (o.objects) recorrerImagenes(o.objects, f);
+    if (o.fuente3d) recorrerImagenes([o.fuente3d], f);
   }
 }
 function serializar() {

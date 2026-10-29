@@ -390,3 +390,9 @@ dialog.dialogo-ancho { width:min(920px, calc(100vw - 24px)); }
 .capa.fija { border-style:dashed; }
 .capa > button.fijar { font-size:.8rem; }
 @media (max-width: 900px) { .linea-tiempo { flex-wrap:wrap; } .lt-tira { order:3; flex-basis:100%; } }
+
+/* ---------- Perspectiva y 3D ---------- */
+.presets-3d { display:flex; flex-wrap:wrap; gap:4px; margin-bottom:10px; }
+#p3D:not(.activo3d) .ctl-3d { display:none; }
+.ctl-3d.apagado { opacity:.45; }
+#p3D .botones button.activo { color:#fff; }

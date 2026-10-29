@@ -7,6 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>CASADREW · Estudio</title>
 <link rel="stylesheet" href="estilo.css">
+<script>try{const a=JSON.parse(localStorage.getItem('casadrew_apariencia')||'{}');if(a.tema)document.documentElement.dataset.tema=a.tema;if(a.acento)document.documentElement.style.setProperty('--acento',a.acento);}catch{}</script>
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -44,6 +45,7 @@
   </defs>
 </svg>
 
+<nav class="menubar" id="menubar" aria-label="Menú principal"></nav>
 <header class="barra">
   <a class="marca" href="../" title="Volver al inicio">CASA<span>DREW</span></a>
   <input id="nombreDoc" class="nombre" value="Sin título" aria-label="Nombre del diseño" maxlength="80">
@@ -238,6 +240,25 @@
   </form>
 </dialog>
 
+<dialog id="dAtajos">
+  <form method="dialog">
+    <h2>Atajos de teclado</h2>
+    <div class="tabla-atajos"><table><tbody id="listaAtajos"></tbody></table></div>
+    <p class="nota">En Mac, Ctrl es la tecla ⌘. En el iPad funcionan con un teclado conectado.</p>
+    <div class="pie-dialogo"><button value="cerrar" class="principal">Cerrar</button></div>
+  </form>
+</dialog>
+
+<dialog id="dAcerca">
+  <form method="dialog">
+    <h2>CASA<span class="acento">DREW</span> Estudio</h2>
+    <p>Estudio creativo de Adriana · THE NOORKO</p>
+    <p class="nota"><span id="versionPrograma"></span> · versión 0.3</p>
+    <p class="nota">Hecho con Fabric.js y perfect-freehand (licencia MIT). Tus diseños se guardan en tu aparato.</p>
+    <div class="pie-dialogo"><button value="cerrar" class="principal">Cerrar</button></div>
+  </form>
+</dialog>
+
 <input id="fImagen" type="file" accept="image/*,.svg" multiple hidden>
 <input id="fProyecto" type="file" accept=".casadrew,.json,application/json" hidden>
 
@@ -246,5 +267,6 @@
 <script src="trazo.js"></script>
 <script src="almacen.js"></script>
 <script src="editor.js"></script>
+<script src="menus.js"></script>
 </body>
 </html>

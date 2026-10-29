@@ -51,7 +51,16 @@ input[type=range] { padding:0; border:0; background:none; accent-color:var(--ace
           background:color-mix(in srgb, var(--tarjeta) 70%, transparent); pointer-events:none; }
 .mesa.arrastrando .soltar { display:flex; }
 
-.panel { width:290px; flex:none; background:var(--tarjeta); border-left:1px solid var(--linea); overflow:auto; padding:4px 14px 20px; }
+.panel { width:300px; flex:none; background:var(--tarjeta); border-left:1px solid var(--linea); display:flex; flex-direction:column; min-height:0; }
+.panel-props { flex:1; min-height:80px; overflow-y:auto; overflow-x:hidden; padding:4px 14px 16px; }
+/* Las capas quedan siempre a la vista en la parte de abajo del panel, con su propio desplazamiento. */
+.dock-capas { flex:none; height:var(--alto-capas, 38%); min-height:120px; max-height:75%; display:flex; flex-direction:column; position:relative;
+              border-top:1px solid var(--linea); padding:8px 10px 6px 14px !important; background:color-mix(in srgb, var(--tarjeta) 92%, var(--acento)); }
+.dock-capas h3 { display:flex; align-items:center; gap:6px; margin-bottom:6px !important; }
+.dock-capas .cuenta { font-weight:600; color:var(--suave); letter-spacing:0; text-transform:none; }
+.lista-capas { flex:1; overflow-y:auto; overflow-x:hidden; padding:4px 4px 4px 2px; }
+.asa-dock { position:absolute; left:0; right:0; top:-4px; height:8px; cursor:ns-resize; touch-action:none; z-index:2; }
+.asa-dock::after { content:''; position:absolute; left:50%; top:3px; width:40px; height:3px; margin-left:-20px; border-radius:3px; background:var(--linea); }
 .panel section { padding:12px 0; border-bottom:1px solid var(--linea); }
 .panel section:last-child { border-bottom:0; }
 .panel h3 { font-size:.8rem; text-transform:uppercase; letter-spacing:.06em; color:var(--suave); margin-bottom:10px; }
@@ -75,14 +84,6 @@ input[type=range] { padding:0; border:0; background:none; accent-color:var(--ace
 .nota { color:var(--suave); font-size:.8rem; margin:6px 0; }
 
 .capas { list-style:none; padding:0; }
-.capas li { display:flex; align-items:center; gap:2px; padding:2px 4px; border-radius:8px; cursor:pointer; }
-.capas li:hover { background:var(--hover); }
-.capas li.sel { background:color-mix(in srgb, var(--acento) 18%, transparent); }
-.capas li .nom { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; padding:6px 4px; }
-.capas li.oculta .nom { opacity:.45; }
-.capas li button { min-width:30px; height:30px; padding:0; opacity:.55; }
-.capas li button:hover, .capas li button.on { opacity:1; }
-.capas li button svg { width:16px; height:16px; }
 
 .pie { display:flex; justify-content:space-between; gap:12px; padding:4px 12px; padding-bottom:max(4px, env(safe-area-inset-bottom));
        font-size:.8rem; color:var(--suave); background:var(--tarjeta); border-top:1px solid var(--linea); }
@@ -211,3 +212,87 @@ html[data-tema="oficina"] .menubar .titulo:hover, html[data-tema="oficina"] .men
 .inicio-b { display:inline-flex; align-items:center; justify-content:center; width:36px; height:36px; border-radius:10px; color:var(--texto); }
 .inicio-b:hover { background:var(--hover); }
 .inicio-b svg { width:21px; height:21px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+
+/* ---------- Capas ---------- */
+.extremo { font-size:.72rem; font-weight:700; letter-spacing:.06em; color:var(--suave); text-transform:uppercase; margin:2px 4px 6px; }
+.extremo.abajo { margin:6px 4px 0; }
+.capas { position:relative; display:flex; flex-direction:column; gap:5px; }
+.capa { position:relative; display:flex; flex-wrap:wrap; align-items:center; gap:4px; padding:5px 6px 5px 4px; border-radius:12px; cursor:pointer;
+        background:var(--tarjeta); border:1px solid var(--linea);
+        /* Las capas de arriba (delante) tienen una sombra algo mayor: dan sensación de estar encima */
+        box-shadow:0 calc(4px - min(var(--prof), 4) * 1px) calc(10px - min(var(--prof), 6) * 1px) rgba(0,0,0,calc(.10 - min(var(--prof), 6) * .012)); }
+.capa:hover { border-color:color-mix(in srgb, var(--acento) 45%, var(--linea)); }
+.capa.sel { border:2px solid var(--acento); background:color-mix(in srgb, var(--acento) 10%, var(--tarjeta)); padding:4px 5px 4px 3px; }
+.capa.sel::before { content:''; position:absolute; left:-2px; top:8px; bottom:8px; width:4px; border-radius:4px; background:var(--acento); }
+.capa.oculta .mini-capa, .capa.oculta .nom { opacity:.38; }
+.capa.oculta .nom { text-decoration:line-through; }
+.capa.bloq .nom::after { content:' 🔒'; font-size:.75em; }
+.capa.hija { margin-left:22px; padding-left:8px; background:transparent; box-shadow:none; border-style:dashed; }
+.capa.arrastrando { opacity:.5; }
+.capa .asa { cursor:grab; color:var(--suave); font-size:.8rem; letter-spacing:-2px; padding:6px 3px; touch-action:none; }
+.capa .sangria { width:6px; }
+.capa .abrir-grupo { min-width:22px; width:22px; height:22px; padding:0; font-size:.8rem; }
+.mini-capa { width:38px; height:38px; object-fit:contain; border-radius:7px; background:repeating-conic-gradient(#eee 0 25%, #fff 0 50%) 0 0/10px 10px; border:1px solid var(--linea); flex:none; }
+.capa .nom { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:.88rem; padding:4px 2px; }
+.capa .pct { font-size:.7rem; font-weight:700; padding:2px 6px; border-radius:10px; background:var(--hover); color:var(--suave); }
+.capa > button { min-width:28px; height:28px; padding:0; opacity:.5; }
+.capa > button:hover, .capa > button.on { opacity:1; }
+.capa > button.on { color:var(--acento); }
+.capa > button svg { width:16px; height:16px; }
+.capa .renombrar { flex:1; height:28px; min-width:0; }
+.capa-extra { flex-basis:100%; display:flex; align-items:center; gap:6px; flex-wrap:wrap; padding:6px 2px 2px 26px; cursor:default; }
+.capa-extra label { display:flex; align-items:center; gap:6px; flex:1; min-width:150px; font-size:.78rem; color:var(--suave); }
+.capa-extra input { flex:1; }
+.capa-extra output { font-size:.78rem; font-weight:700; min-width:40px; text-align:right; color:var(--texto); }
+.capa-extra button { height:28px; font-size:.78rem; border:1px solid var(--linea); }
+.linea-soltar { position:absolute; left:0; right:0; height:3px; border-radius:3px; background:var(--acento); pointer-events:none; z-index:2; }
+
+/* ---------- Relleno y degradados ---------- */
+.etq { font-size:.85rem; color:var(--suave); }
+.ed-relleno { margin-bottom:10px; }
+.tipos-relleno { display:grid; grid-template-columns:repeat(4, 1fr); gap:3px; padding:3px; border-radius:10px; background:var(--hover); margin-bottom:8px; }
+.tipos-relleno button { height:28px; font-size:.78rem; padding:0 4px; min-width:0; }
+.tipos-relleno button.activo { background:var(--tarjeta); color:var(--texto); font-weight:700; box-shadow:0 1px 4px rgba(0,0,0,.12); }
+.r-solido { display:flex; gap:8px; align-items:flex-start; }
+.r-solido .r-color { width:44px; height:44px; flex:none; }
+.muestras { display:grid; grid-template-columns:repeat(6, 1fr); gap:4px; flex:1; }
+.muestra-c { min-width:0; width:100%; height:20px; padding:0; border-radius:6px; border:1px solid rgba(0,0,0,.12); }
+.barra-deg { position:relative; height:30px; margin:6px 9px 14px; cursor:copy; touch-action:none; }
+.barra-deg .pista { position:absolute; inset:4px 0; border-radius:8px; border:1px solid var(--linea); }
+.asa-deg { position:absolute; top:50%; width:18px; height:18px; margin:-9px 0 0 -9px; border-radius:50%; border:3px solid #fff; box-shadow:0 0 0 1px rgba(0,0,0,.35), 0 2px 6px rgba(0,0,0,.3); cursor:grab; }
+.asa-deg.activa { width:24px; height:24px; margin:-12px 0 0 -12px; box-shadow:0 0 0 2px var(--acento), 0 2px 8px rgba(0,0,0,.35); }
+.presets { display:grid; grid-template-columns:repeat(6, 1fr); gap:5px; margin-top:4px; }
+.preset { min-width:0; height:26px; padding:0; border-radius:7px; border:1px solid rgba(0,0,0,.08); }
+.preset:hover { transform:scale(1.08); }
+.fila output { font-size:.78rem; min-width:38px; text-align:right; color:var(--texto); }
+
+/* ---------- Modo escritura ---------- */
+.hoja-escritura { position:fixed; z-index:25; left:50%; bottom:46px; transform:translateX(-50%); width:min(640px, calc(100vw - 24px));
+                  padding:14px; border-radius:20px; background:var(--tarjeta); border:1px solid var(--linea); box-shadow:0 18px 50px rgba(0,0,0,.22); }
+html[data-tema="cristal"] .hoja-escritura { -webkit-backdrop-filter:blur(20px); backdrop-filter:blur(20px); background:rgba(255,255,255,.85); }
+.cab-escritura { display:flex; align-items:center; gap:8px; margin-bottom:10px; }
+.cab-escritura .pestanas { flex:1; grid-template-columns:1fr 1fr; margin:0; }
+.papel-rayado { width:100%; min-height:170px; resize:vertical; font-size:1.6rem; line-height:44px; padding:6px 14px; border-radius:12px;
+                border:1px solid var(--linea); color:#1a1a1a; -webkit-user-select:text; user-select:text;
+                background:#fffefa repeating-linear-gradient(transparent 0 43px, #d9e4f2 43px 44px); background-attachment:local; }
+.papel-tinta { width:100%; height:200px; border-radius:12px; border:1px solid var(--linea); touch-action:none; display:block;
+               background:#fffefa repeating-linear-gradient(transparent 0 49px, #d9e4f2 49px 50px); }
+.muestra-letra { font-size:1.5rem; margin:6px 2px 10px; min-height:1.6em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.hoja-escritura .botones-fila { display:flex; gap:8px; justify-content:flex-end; margin-top:10px; }
+.hoja-escritura .botones-fila button:not(.principal) { border:1px solid var(--linea); }
+
+/* ---------- Herramientas de imagen ---------- */
+.botones-img { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+.botones-img button { height:auto; min-height:52px; flex-direction:column; gap:4px; padding:8px 4px; border:1px solid var(--linea); border-radius:12px; font-size:.78rem; }
+.botones-img button svg { width:22px; height:22px; }
+.proporciones { display:flex; flex-wrap:wrap; gap:4px; margin-bottom:8px; }
+.chip-p { height:28px; padding:0 10px; border-radius:14px; border:1px solid var(--linea); font-size:.8rem; }
+.chip-p.activo { background:var(--acento); border-color:var(--acento); color:#fff; }
+#pImagen .botones-fila { display:flex; gap:6px; flex-wrap:wrap; margin-top:8px; }
+#pImagen .botones-fila button:not(.principal) { border:1px solid var(--linea); }
+.motor { border:1px solid var(--linea); border-radius:14px; padding:14px; margin:12px 0; }
+.motor dl { display:grid; grid-template-columns:auto 1fr; gap:4px 12px; margin:10px 0; font-size:.88rem; }
+.motor dt { color:var(--suave); }
+.motor button { border:1px solid var(--linea); }
+.nota.ok { color:#1f9e74; font-weight:600; }
+.nota.mal { color:var(--peligro); font-weight:600; }

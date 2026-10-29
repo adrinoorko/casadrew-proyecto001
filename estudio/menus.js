@@ -134,11 +134,13 @@ const MENUS = [
   { t: 'Herramientas', sub: [
     { t: 'Seleccionar', k: 'V', f: () => ponerHerramienta('seleccion'), marca: () => herramienta === 'seleccion' },
     { t: 'Mover la vista', k: 'H', f: () => ponerHerramienta('mano'), marca: () => herramienta === 'mano' },
-    { t: 'Pincel', k: 'B', f: () => ponerHerramienta('pincel'), marca: () => herramienta === 'pincel' },
+    { t: 'Modo dibujo (pincel)', k: 'B', f: () => ponerHerramienta('pincel'), marca: () => herramienta === 'pincel' },
+    { t: 'Modo escritura (letra a texto)', k: 'W', f: () => ponerHerramienta('escritura'), marca: () => herramienta === 'escritura' },
     { t: 'Borrador de trazos', k: 'X', f: () => ponerHerramienta('borrador'), marca: () => herramienta === 'borrador' },
     '-',
     { t: 'Tipo de pincel', sub: Object.entries(Trazo.PINCELES).map(([clave, p]) => ({ t: p.n,
       f: () => { ponerHerramienta('pincel'); $(`#pinceles [data-pincel=${clave}]`).click(); }, marca: () => pincelAj.pincel === clave })) },
+    { t: 'Motores de IA…', f: () => $('#dIA').showModal() },
     { t: 'Solo el lápiz dibuja', f: () => cambiarPincel({ soloLapiz: !pincelAj.soloLapiz }), marca: () => pincelAj.soloLapiz },
   ] },
   { t: 'Ayuda', sub: [

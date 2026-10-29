@@ -45,7 +45,8 @@ canvas._renderBackground = function (ctx) {
   ctx.save();
   ctx.transform(v[0], v[1], v[2], v[3], v[4], v[5]);
   if (!exportando) { ctx.shadowColor = 'rgba(0,0,0,.18)'; ctx.shadowBlur = 24; }
-  if (doc.fondo) { ctx.fillStyle = doc.fondo; ctx.fillRect(0, 0, doc.w, doc.h); }
+  if (doc.fondoDeg) { ctx.fillStyle = Degradados.enContexto(ctx, doc.fondoDeg, doc.w, doc.h); ctx.fillRect(0, 0, doc.w, doc.h); }
+  else if (doc.fondo) { ctx.fillStyle = doc.fondo; ctx.fillRect(0, 0, doc.w, doc.h); }
   else if (!exportando) {
     ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, doc.w, doc.h); ctx.shadowColor = 'transparent';
     const t = 16 / v[0]; ctx.fillStyle = '#e6e6e6';
@@ -125,6 +126,7 @@ function ponerHerramienta(h) {
   if (dibujando()) { canvas.discardActiveObject(); canvas.requestRenderAll(); }
   aplicarModoMano();
   refrescarPanel();
+  document.dispatchEvent(new CustomEvent('casadrew:herramienta', { detail: h }));
 }
 function aplicarModoMano() {
   const mano = herramienta === 'mano' || espacio;
@@ -372,7 +374,7 @@ async function cargarEstado(e, recolocar = true) {
   historia.pausa = true;
   try {
     canvas.discardActiveObject();
-    doc = { ...doc, ...e.doc };
+    doc = { ...e.doc, id: e.doc?.id || doc.id };
     await prepararImagenes(e.objetos);
     await canvas.loadFromJSON({ objects: e.objetos || [] });
     canvas.getObjects().forEach(o => { if (!o.id) o.id = nuevoId(); });
@@ -443,7 +445,8 @@ function aSVG() {
   canvas.viewportTransform = [1, 0, 0, 1, 0, 0];
   try {
     let svg = canvas.toSVG({ width: doc.w, height: doc.h, viewBox: { x: 0, y: 0, width: doc.w, height: doc.h } });
-    if (doc.fondo) svg = svg.replace('</defs>', `</defs>\n<rect x="0" y="0" width="${doc.w}" height="${doc.h}" fill="${doc.fondo}"/>`);
+    if (doc.fondoDeg) svg = svg.replace('</defs>', `${Degradados.enSVG(doc.fondoDeg, doc.w, doc.h, 'fondoPagina')}</defs>\n<rect x="0" y="0" width="${doc.w}" height="${doc.h}" fill="url(#fondoPagina)"/>`);
+    else if (doc.fondo) svg = svg.replace('</defs>', `</defs>\n<rect x="0" y="0" width="${doc.w}" height="${doc.h}" fill="${doc.fondo}"/>`);
     return svg;
   } finally {
     exportando = false;
@@ -719,6 +722,7 @@ document.addEventListener('keydown', e => {
   }
   const atajo = { v: () => ponerHerramienta('seleccion'), h: () => ponerHerramienta('mano'),
     b: () => ponerHerramienta('pincel'), x: () => ponerHerramienta('borrador'),
+    w: () => ponerHerramienta('escritura'),
     t: () => colocar(CREAR.texto()), r: () => colocar(CREAR.rect()), e: () => colocar(CREAR.elipse()), l: () => colocar(CREAR.linea()) }[k];
   if (atajo) hacer(atajo);
 });
@@ -760,7 +764,7 @@ function refrescarPanel() {
   $('#gAjustesPincel').hidden = herramienta === 'borrador';
   $('#pObjeto').hidden = !o; $('#pOrganizar').hidden = !o; $('#pDoc').hidden = !!o;
   $('#dAncho').value = doc.w; $('#dAlto').value = doc.h;
-  $('#dFondo').value = aHex(doc.fondo || '#ffffff'); $('#dTransp').checked = !doc.fondo;
+  if (!o && typeof Degradados !== 'undefined') Degradados.mostrarFondo();
   if (!o) return;
   const varios = objs.length > 1;
   $('#tObjeto').textContent = varios ? `${objs.length} elementos` : (o.nombre || NOMBRES_TIPO[o.type] || 'Elemento');
@@ -781,16 +785,7 @@ function refrescarPanel() {
   }
   const conRelleno = unico && !(unico instanceof F.Line) && !(unico instanceof F.FabricImage) && !(unico instanceof F.Group);
   $('#gRelleno').hidden = !conRelleno;
-  if (conRelleno) {
-    const f = unico.fill;
-    const tipo = !f ? 'ninguno' : f instanceof F.Gradient ? 'degradado' : 'solido';
-    $('#oTipoRelleno').value = tipo;
-    $('#oRelleno').value = tipo === 'degradado' ? aHex(f.colorStops[0].color) : aHex(f);
-    $('#oRelleno2').value = tipo === 'degradado' ? aHex(f.colorStops[f.colorStops.length - 1].color) : '#ffffff';
-    $('#oRelleno').hidden = tipo === 'ninguno';
-    $('#oRelleno2').hidden = $('#oGradAng').hidden = tipo !== 'degradado';
-    if (tipo === 'degradado') $('#oGradAng').value = Math.round(unico.anguloDegradado ?? 90);
-  }
+  if (conRelleno && typeof Degradados !== 'undefined') Degradados.mostrarObjeto();
   const ref = unico || o;
   $('#oBorde').value = aHex(ref.stroke || '#000000'); $('#oGrosor').value = ref.strokeWidth || 0;
   $('#lRadio').hidden = !(unico instanceof F.Rect);
@@ -820,21 +815,7 @@ enlazar('#oBorde', (o, el) => { o.set('stroke', el.value); if (!o.strokeWidth) o
 enlazar('#oGrosor', (o, el) => o.set('strokeWidth', Math.max(0, +el.value)));
 enlazar('#oRadio', (o, el) => { if (o instanceof F.Rect) o.set({ rx: +el.value, ry: +el.value }); });
 
-function aplicarRelleno(o) {
-  const tipo = $('#oTipoRelleno').value, c1 = $('#oRelleno').value, c2 = $('#oRelleno2').value;
-  if (tipo === 'ninguno') return o.set('fill', null);
-  if (tipo === 'solido') return o.set('fill', c1);
-  const ang = (+$('#oGradAng').value || 0) * Math.PI / 180, cx = Math.cos(ang) / 2, cy = Math.sin(ang) / 2;
-  o.set({ anguloDegradado: +$('#oGradAng').value || 0, fill: new F.Gradient({
-    type: 'linear', gradientUnits: 'percentage', coords: { x1: .5 - cx, y1: .5 - cy, x2: .5 + cx, y2: .5 + cy },
-    colorStops: [{ offset: 0, color: c1 }, { offset: 1, color: c2 }] }) });
-}
-EXTRA.push('anguloDegradado');
-['#oRelleno', '#oRelleno2', '#oGradAng'].forEach(s => enlazar(s, aplicarRelleno));
-$('#oTipoRelleno').addEventListener('change', () => {
-  if ($('#oTipoRelleno').value === 'degradado' && !$('#oGradAng').value) $('#oGradAng').value = 90;
-  activos().forEach(aplicarRelleno); canvas.requestRenderAll(); registrar();
-});
+EXTRA.push('anguloDegradado', 'degradado');
 
 function aplicarSombra(o) {
   o.set('shadow', $('#oSombra').checked ? new F.Shadow({ color: $('#oSombraCol').value + '66',
@@ -859,9 +840,6 @@ alternar('#tSubr', o => o.set('underline', !o.underline));
 function cambiarDoc(cambios) { Object.assign(doc, cambios); canvas.requestRenderAll(); registrar(); }
 $('#dAncho').onchange = e => +e.target.value > 0 && cambiarDoc({ w: Math.min(20000, +e.target.value) });
 $('#dAlto').onchange = e => +e.target.value > 0 && cambiarDoc({ h: Math.min(20000, +e.target.value) });
-$('#dFondo').oninput = e => { doc.fondo = e.target.value; $('#dTransp').checked = false; canvas.requestRenderAll(); };
-$('#dFondo').onchange = () => registrar();
-$('#dTransp').onchange = e => cambiarDoc({ fondo: e.target.checked ? null : $('#dFondo').value });
 $('#nombreDoc').onchange = e => { doc.nombre = e.target.value.trim() || 'Sin título'; registrar(); };
 
 canvas.on('selection:created', refrescarTodo);
@@ -991,6 +969,8 @@ async function abrirProyecto(archivo) {
 // ---------- Arranque ----------
 // Desde la pantalla de inicio llega ?id=… (abrir), ?nuevo=1&w&h&nombre (crear) o ?plantilla=… (plantilla).
 (async () => {
+  // Espera a que se carguen los módulos que van después (capas, degradados, imagen…).
+  if (document.readyState === 'loading') await new Promise(ok => document.addEventListener('DOMContentLoaded', ok, { once: true }));
   medirMesa();
   const q = new URLSearchParams(location.search);
   let abierto = false;

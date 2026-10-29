@@ -51,12 +51,12 @@ const forma = (f, max) => {
   return el('span', { className: 'forma' }, i);
 };
 function abrirEditor(params) { location.href = 'editor.html?' + new URLSearchParams(params); }
-function crear(w, h, nombre, transparente = false) { abrirEditor({ nuevo: 1, w: Math.round(w), h: Math.round(h), nombre, ...(transparente ? { transp: 1 } : {}) }); }
+function crear(w, h, nombre, transparente = false, ppp = 0) { abrirEditor({ nuevo: 1, w: Math.round(w), h: Math.round(h), nombre, ...(transparente ? { transp: 1 } : {}), ...(ppp ? { ppp } : {}) }); }
 
 $('#formatosRapidos').append(
   ...FORMATOS.slice(0, 7).map(f => {
     const b = el('button', { className: 'formato-rapido', title: `${f.n} ${f.d}: ${f.w} × ${f.h} px` }, forma(f, 58), el('span', { textContent: f.n }), el('small', { textContent: f.d }));
-    b.onclick = () => crear(f.w, f.h, `${f.n} ${f.d}`.trim());
+    b.onclick = () => crear(f.w, f.h, `${f.n} ${f.d}`.trim(), false, f.mm ? 300 : 0);
     return b;
   }),
   (() => { const b = el('button', { className: 'formato-rapido', title: 'Elegir tamaño, medidas y resolución' }, forma({ w: 1, h: 1, c1: '#d8d2c8', c2: '#a89c8f' }, 46), el('span', { textContent: 'Personalizado' }), el('small', { textContent: 'px, mm, cm' })); b.onclick = abrirCrear; return b; })(),
@@ -103,7 +103,7 @@ $('#dCrear').addEventListener('close', () => {
   if ($('#dCrear').returnValue !== 'crear') return;
   const ppp = +$('#cPpp').value, w = aPx(+$('#cAncho').value, unidad, ppp), h = aPx(+$('#cAlto').value, unidad, ppp);
   if (!(w >= 1 && h >= 1)) return;
-  crear(Math.min(20000, w), Math.min(20000, h), formatoCrear ? `${formatoCrear.n} ${formatoCrear.d}` : 'Sin título', $('#cTransp').checked);
+  crear(Math.min(20000, w), Math.min(20000, h), formatoCrear ? `${formatoCrear.n} ${formatoCrear.d}` : 'Sin título', $('#cTransp').checked, unidad === 'px' && !formatoCrear?.mm ? 0 : ppp);
 });
 
 // ---------- Tarjetas de proyecto ----------

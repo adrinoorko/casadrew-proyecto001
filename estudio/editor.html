@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#1a1a1a">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>CASADREW · Estudio</title>
-<link rel="stylesheet" href="estilo.css?v=10">
+<link rel="stylesheet" href="estilo.css?v=11">
 <script>try{const a=JSON.parse(localStorage.getItem('casadrew_apariencia')||'{}');const t=('tema' in a)?a.tema:'cristal';if(t)document.documentElement.dataset.tema=t;if(a.acento)document.documentElement.style.setProperty('--acento',a.acento);}catch{}</script>
 </head>
 <body>
@@ -259,22 +259,6 @@
   </form>
 </dialog>
 
-<dialog id="dExportar">
-  <form method="dialog">
-    <h2>Exportar</h2>
-    <div class="fila"><label class="ancho">Formato
-      <select id="eFormato">
-        <option value="png">PNG (imagen, admite transparencia)</option>
-        <option value="jpg">JPG (imagen ligera)</option>
-        <option value="svg">SVG (vectorial)</option>
-        <option value="casadrew">Proyecto editable (.casadrew)</option>
-      </select></label></div>
-    <div class="fila" id="eFilaEscala"><label class="ancho">Tamaño
-      <select id="eEscala"><option value="0.5">50 %</option><option value="1" selected>100 %</option><option value="2">200 %</option><option value="3">300 %</option></select></label></div>
-    <p class="nota" id="eInfo"></p>
-    <div class="pie-dialogo"><button value="cancelar" class="texto">Cancelar</button><button value="exportar" class="principal">Descargar</button></div>
-  </form>
-</dialog>
 
 <dialog id="dAtajos">
   <form method="dialog">
@@ -314,20 +298,22 @@
 <input id="fImagen" type="file" accept="image/*,.svg" multiple hidden>
 <input id="fProyecto" type="file" accept=".casadrew,.json,application/json" hidden>
 
-<script src="lib/fabric-6.7.1.min.js?v=10"></script>
-<script src="lib/perfect-freehand-1.2.2.js?v=10"></script>
-<script src="trazo.js?v=10"></script>
-<script src="comun.js?v=10"></script>
-<script src="almacen.js?v=10"></script>
-<script src="plantillas.js?v=10"></script>
-<script src="editor.js?v=10"></script>
-<script src="menus.js?v=10"></script>
-<script src="capas.js?v=10"></script>
-<script src="degradados.js?v=10"></script>
-<script src="escritura.js?v=10"></script>
-<script src="imagen.js?v=10"></script>
-<script src="elementos.js?v=10"></script>
-<script src="biblioteca.js?v=10"></script>
-<script src="cajon.js?v=10"></script>
+<script src="lib/fabric-6.7.1.min.js?v=11"></script>
+<script src="lib/perfect-freehand-1.2.2.js?v=11"></script>
+<script src="trazo.js?v=11"></script>
+<script src="comun.js?v=11"></script>
+<script src="almacen.js?v=11"></script>
+<script src="plantillas.js?v=11"></script>
+<script src="editor.js?v=11"></script>
+<script src="lib/gifenc-1.0.3.js?v=11"></script>
+<script src="exportar.js?v=11"></script>
+<script src="menus.js?v=11"></script>
+<script src="capas.js?v=11"></script>
+<script src="degradados.js?v=11"></script>
+<script src="escritura.js?v=11"></script>
+<script src="imagen.js?v=11"></script>
+<script src="elementos.js?v=11"></script>
+<script src="biblioteca.js?v=11"></script>
+<script src="cajon.js?v=11"></script>
 </body>
 </html>

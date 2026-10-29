@@ -45,8 +45,10 @@ canvas._renderBackground = function (ctx) {
   ctx.save();
   ctx.transform(v[0], v[1], v[2], v[3], v[4], v[5]);
   if (!exportando) { ctx.shadowColor = 'rgba(0,0,0,.18)'; ctx.shadowBlur = 24; }
-  if (doc.fondoDeg) { ctx.fillStyle = Degradados.enContexto(ctx, doc.fondoDeg, doc.w, doc.h); ctx.fillRect(0, 0, doc.w, doc.h); }
-  else if (doc.fondo) { ctx.fillStyle = doc.fondo; ctx.fillRect(0, 0, doc.w, doc.h); }
+  // Al exportar con sangrado, el fondo se alarga por fuera de la página.
+  const s = exportando ? (window.sangradoExport || 0) : 0;
+  if (doc.fondoDeg) { ctx.fillStyle = Degradados.enContexto(ctx, doc.fondoDeg, doc.w, doc.h); ctx.fillRect(-s, -s, doc.w + 2 * s, doc.h + 2 * s); }
+  else if (doc.fondo) { ctx.fillStyle = doc.fondo; ctx.fillRect(-s, -s, doc.w + 2 * s, doc.h + 2 * s); }
   else if (!exportando) {
     ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, doc.w, doc.h); ctx.shadowColor = 'transparent';
     const t = 16 / v[0]; ctx.fillStyle = '#e6e6e6';
@@ -464,29 +466,6 @@ function descargar(nombre, contenido, tipo) {
   if (!url.startsWith('data:')) setTimeout(() => URL.revokeObjectURL(url), 5000);
 }
 const nombreArchivo = () => (doc.nombre || 'diseño').replace(/[\\/:*?"<>|]+/g, '').trim() || 'diseño';
-function infoExportar() {
-  const f = $('#eFormato').value, k = +$('#eEscala').value;
-  $('#eFilaEscala').hidden = f === 'svg' || f === 'casadrew';
-  $('#eInfo').textContent =
-    f === 'casadrew' ? 'Guarda todo el diseño para seguir editándolo en otro aparato o como copia de seguridad.'
-    : f === 'svg' ? 'Vectorial: se puede ampliar sin perder calidad. Las fotos van dentro tal cual.'
-    : `Saldrá de ${Math.round(doc.w * k)} × ${Math.round(doc.h * k)} px.` + (f === 'jpg' && !doc.fondo ? ' El JPG no admite transparencia: el fondo saldrá blanco.' : '');
-}
-$('#eFormato').onchange = $('#eEscala').onchange = infoExportar;
-$('#bExportar').onclick = () => { infoExportar(); $('#dExportar').showModal(); };
-$('#dExportar').addEventListener('close', () => {
-  if ($('#dExportar').returnValue !== 'exportar') return;
-  const f = $('#eFormato').value, k = +$('#eEscala').value, n = nombreArchivo();
-  if (f === 'casadrew') return descargar(n + '.casadrew', JSON.stringify(serializarCompleto()), 'application/json');
-  if (f === 'svg') return descargar(n + '.svg', aSVG(), 'image/svg+xml');
-  let c = aCanvasDePagina(k);
-  if (f === 'jpg') {
-    const b = Object.assign(document.createElement('canvas'), { width: c.width, height: c.height }), x = b.getContext('2d');
-    x.fillStyle = '#ffffff'; x.fillRect(0, 0, b.width, b.height); x.drawImage(c, 0, 0); c = b;
-    return descargar(n + '.jpg', c.toDataURL('image/jpeg', .95));
-  }
-  descargar(n + '.png', c.toDataURL('image/png'));
-});
 
 // ---------- Crear elementos ----------
 function colocar(o, nombre) {
@@ -981,7 +960,7 @@ async function abrirProyecto(archivo) {
   try {
     if (q.get('nuevo')) {
       const w = Math.min(20000, Math.max(1, +q.get('w') || 1080)), h = Math.min(20000, Math.max(1, +q.get('h') || 1080));
-      doc = { id: nuevoId(), nombre: q.get('nombre') || 'Sin título', w, h, fondo: q.get('transp') ? null : '#ffffff' };
+      doc = { id: nuevoId(), nombre: q.get('nombre') || 'Sin título', w, h, fondo: q.get('transp') ? null : '#ffffff', ...(+q.get('ppp') ? { ppp: +q.get('ppp') } : {}) };
       await cargarEstado({ doc, objetos: [] });
       reiniciarHistoria();
       abierto = true;

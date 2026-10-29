@@ -18,10 +18,7 @@ const textoNuevo = (texto, tam, extra = {}) => () => {
   colocar(t, texto);
 };
 const forma = clave => () => { ponerHerramienta('seleccion'); colocar(CREAR[clave]()); };
-const exportarComo = (formato, escala = 1) => () => {
-  $('#eFormato').value = formato; $('#eEscala').value = String(escala);
-  infoExportar(); $('#dExportar').showModal();
-};
+const exportarComo = (formato, escala = 1) => () => Exportar.avanzada({ formato, escala });
 const tituloCaso = s => s.toLocaleLowerCase('es').replace(/(^|\s)\p{L}/gu, m => m.toLocaleUpperCase('es'));
 const panelVisible = () => !$('#panel').classList.contains('oculto');
 
@@ -32,12 +29,15 @@ const MENUS = [
     { t: 'Abrir archivo .casadrew…', f: () => $('#fProyecto').click() },
     '-',
     { t: 'Importar imagen…', k: 'Ctrl+⇧+I', f: () => $('#fImagen').click() },
-    { t: 'Exportar', sub: [
+    { t: 'Exportación exprés', k: 'Ctrl+E', f: () => Exportar.expres('auto') },
+    { t: 'Exprés para…', sub: Object.entries(Exportar.PRESETS).map(([id, p]) => ({ t: p.n, f: () => Exportar.expres(id) })) },
+    { t: 'Exportación avanzada…', k: 'Ctrl+⇧+E', f: () => Exportar.avanzada() },
+    { t: 'Exportar como', sub: [
       { t: 'PNG', f: exportarComo('png') }, { t: 'PNG al doble de tamaño', f: exportarComo('png', 2) },
-      { t: 'JPG', f: exportarComo('jpg') }, { t: 'SVG (vectorial)', f: exportarComo('svg') },
+      { t: 'JPG', f: exportarComo('jpg') }, { t: 'WebP', f: exportarComo('webp') }, { t: 'PDF para imprimir', f: exportarComo('pdf') },
+      { t: 'SVG (vectorial)', f: exportarComo('svg') },
       '-', { t: 'Proyecto editable (.casadrew)', f: exportarComo('casadrew') },
     ] },
-    { t: 'Exportar…', k: 'Ctrl+E', f: () => $('#bExportar').click() },
     '-',
     { t: 'Guardar ahora', k: 'Ctrl+S', f: guardarYa },
     { t: 'Crear una firma…', f: () => $('#bFirma').click() },
@@ -221,7 +221,7 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape' && menuAbierto) { cerrarMenus(); return; }
   if (escribiendo(e) || document.querySelector('dialog[open]') || !(e.ctrlKey || e.metaKey)) return;
   const k = e.key.toLowerCase();
-  const atajo = { n: () => $('#bNuevo').click(), o: () => $('#bMisDisenos').click(), s: guardarYa, e: () => $('#bExportar').click() }[k];
+  const atajo = { n: () => $('#bNuevo').click(), o: () => $('#bMisDisenos').click(), s: guardarYa, e: () => e.shiftKey ? Exportar.avanzada() : Exportar.expres('auto') }[k];
   if (atajo && !e.shiftKey) { e.preventDefault(); atajo(); }
   else if (k === 'i' && e.shiftKey) { e.preventDefault(); $('#fImagen').click(); }
 });

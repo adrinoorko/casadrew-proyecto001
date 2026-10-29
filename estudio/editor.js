@@ -6,10 +6,9 @@ const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
 const F = fabric;
 const ES_PROGRAMA = location.protocol === 'casadrew:';
-if (ES_PROGRAMA) $('.marca').removeAttribute('href');
 
 // Propiedades propias que se guardan con cada elemento.
-const EXTRA = ['id', 'nombre', 'bloqueado', 'lockMovementX', 'lockMovementY', 'lockScalingX', 'lockScalingY', 'lockRotation', 'hasControls', 'trazo', 'perPixelTargetFind'];
+const EXTRA = ['id', 'nombre', 'bloqueado', 'lockMovementX', 'lockMovementY', 'lockScalingX', 'lockScalingY', 'lockRotation', 'hasControls', 'trazo', 'perPixelTargetFind', 'imgRef'];
 const FORMATOS = [
   { n: 'Instagram cuadrado', w: 1080, h: 1080 }, { n: 'Instagram vertical', w: 1080, h: 1350 },
   { n: 'Historia / Reel', w: 1080, h: 1920 }, { n: 'Presentación 16:9', w: 1920, h: 1080 },
@@ -307,8 +306,45 @@ canvas.on('object:moving', ({ target: o }) => {
 
 // ---------- Historial (deshacer / rehacer) ----------
 const historia = { pila: [], pos: -1, pausa: false };
+// Las fotos no van dentro de cada copia del historial: solo su referencia (ver almacen.js).
+const imagenes = new Map();
+const REF = 'casadrew-img:';
+function recorrerImagenes(objs, f) {
+  for (const o of objs || []) {
+    if (/^image$/i.test(o.type)) f(o);
+    if (o.objects) recorrerImagenes(o.objects, f);
+  }
+}
 function serializar() {
-  return { formato: 'casadrew', version: 1, doc: { ...doc }, objetos: canvas.toObject(EXTRA).objects };
+  const objetos = canvas.toObject(EXTRA).objects;
+  recorrerImagenes(objetos, o => { if (o.imgRef && imagenes.has(o.imgRef)) o.src = REF + o.imgRef; });
+  return { formato: 'casadrew', version: 2, doc: { ...doc }, objetos };
+}
+// Para el archivo .casadrew: con las fotos dentro, para abrirlo en otro aparato.
+function serializarCompleto() {
+  const datos = serializar();
+  recorrerImagenes(datos.objetos, o => { if (o.src.startsWith(REF)) o.src = imagenes.get(o.imgRef) || ''; });
+  return datos;
+}
+async function registrarImagen(data) {
+  const ref = huella(data);
+  if (!imagenes.has(ref)) { imagenes.set(ref, data); await Almacen.guardarImagen(ref, data); }
+  return ref;
+}
+// Antes de cargar: pone cada foto en su sitio y convierte las de diseños antiguos a referencias.
+async function prepararImagenes(objetos) {
+  const tareas = [];
+  recorrerImagenes(objetos, o => tareas.push((async () => {
+    if (typeof o.src !== 'string') return;
+    if (o.src.startsWith('data:')) o.imgRef = await registrarImagen(o.src);
+    else if (o.src.startsWith(REF)) {
+      const ref = o.src.slice(REF.length);
+      if (!imagenes.has(ref)) imagenes.set(ref, await Almacen.leerImagen(ref));
+      o.imgRef = ref;
+      o.src = imagenes.get(ref) || '';
+    }
+  })()));
+  await Promise.all(tareas);
 }
 function registrar() {
   if (historia.pausa) return;
@@ -337,6 +373,7 @@ async function cargarEstado(e, recolocar = true) {
   try {
     canvas.discardActiveObject();
     doc = { ...doc, ...e.doc };
+    await prepararImagenes(e.objetos);
     await canvas.loadFromJSON({ objects: e.objetos || [] });
     canvas.getObjects().forEach(o => { if (!o.id) o.id = nuevoId(); });
   } finally {
@@ -364,12 +401,14 @@ let temporizador = null;
 function autoguardar() {
   ponerEstado('Guardando…');
   clearTimeout(temporizador);
-  temporizador = setTimeout(guardarYa, 700);
+  temporizador = setTimeout(guardarYa, 1200);
 }
 async function guardarYa() {
   clearTimeout(temporizador);
   try {
-    await Almacen.guardar({ id: doc.id, nombre: doc.nombre, actualizado: Date.now(), datos: serializar(), miniatura: miniatura() });
+    // Se conservan los datos que pone la pantalla de inicio (favorito, papelera, perfil).
+    const previo = await Almacen.leer(doc.id) || { perfil: Comun.perfilActual().id };
+    await Almacen.guardar({ ...previo, id: doc.id, nombre: doc.nombre, actualizado: Date.now(), datos: serializar(), miniatura: miniatura() });
     Almacen.recordarUltimo(doc.id);
     ponerEstado('Guardado en este aparato · ' + new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }));
   } catch (err) {
@@ -431,7 +470,7 @@ $('#bExportar').onclick = () => { infoExportar(); $('#dExportar').showModal(); }
 $('#dExportar').addEventListener('close', () => {
   if ($('#dExportar').returnValue !== 'exportar') return;
   const f = $('#eFormato').value, k = +$('#eEscala').value, n = nombreArchivo();
-  if (f === 'casadrew') return descargar(n + '.casadrew', JSON.stringify(serializar()), 'application/json');
+  if (f === 'casadrew') return descargar(n + '.casadrew', JSON.stringify(serializarCompleto()), 'application/json');
   if (f === 'svg') return descargar(n + '.svg', aSVG(), 'image/svg+xml');
   let c = aCanvasDePagina(k);
   if (f === 'jpg') {
@@ -492,7 +531,9 @@ async function importarArchivos(archivos) {
         const { objects, options } = await F.loadSVGFromString(await leer(a, 'texto'));
         o = F.util.groupSVGElements(objects.filter(Boolean), options);
       } else if (a.type.startsWith('image/')) {
-        o = await F.FabricImage.fromURL(await leer(a, 'url'));
+        const data = await leer(a, 'url');
+        o = await F.FabricImage.fromURL(data);
+        o.imgRef = await registrarImagen(data);
       } else { ponerEstado(`«${a.name}» no es una imagen que pueda abrir todavía.`); continue; }
       const k = Math.min(1, (doc.w * .8) / o.width, (doc.h * .8) / o.height);
       o.scale(k);
@@ -908,7 +949,7 @@ $('#dNuevo').addEventListener('close', async () => {
 
 $('#bMisDisenos').onclick = async () => {
   await guardarYa();
-  const lista = (await Almacen.listar()).sort((a, b) => b.actualizado - a.actualizado);
+  const lista = (await Almacen.listar()).filter(p => Comun.esDelPerfil(p) && !p.eliminado).sort((a, b) => b.actualizado - a.actualizado);
   $('#galeria').replaceChildren(...lista.map(p => {
     const b = document.createElement('button');
     b.type = 'button'; b.classList.toggle('actual', p.id === doc.id);
@@ -923,6 +964,7 @@ $('#bMisDisenos').onclick = async () => {
   $('#dMis').showModal();
 };
 async function abrirGuardado(id) {
+  if (!id) return false;
   const p = await Almacen.leer(id);
   if (!p) return false;
   await cargarEstado(p.datos);
@@ -947,11 +989,27 @@ async function abrirProyecto(archivo) {
 }
 
 // ---------- Arranque ----------
+// Desde la pantalla de inicio llega ?id=… (abrir), ?nuevo=1&w&h&nombre (crear) o ?plantilla=… (plantilla).
 (async () => {
   medirMesa();
-  const id = Almacen.ultimo();
+  const q = new URLSearchParams(location.search);
   let abierto = false;
-  try { abierto = id && await abrirGuardado(id); } catch { abierto = false; }
+  try {
+    if (q.get('nuevo')) {
+      const w = Math.min(20000, Math.max(1, +q.get('w') || 1080)), h = Math.min(20000, Math.max(1, +q.get('h') || 1080));
+      doc = { id: nuevoId(), nombre: q.get('nombre') || 'Sin título', w, h, fondo: q.get('transp') ? null : '#ffffff' };
+      await cargarEstado({ doc, objetos: [] });
+      reiniciarHistoria();
+      abierto = true;
+    } else if (q.get('plantilla') && Plantillas.porId(q.get('plantilla'))) {
+      const d = Plantillas.diseno(q.get('plantilla'), EXTRA);
+      d.doc.id = nuevoId();
+      await cargarEstado(d);
+      reiniciarHistoria();
+      abierto = true;
+    } else abierto = await abrirGuardado(q.get('id') || Almacen.ultimo());
+  } catch { abierto = false; }
+  if (abierto) { await guardarYa(); history.replaceState(null, '', 'editor.html?id=' + doc.id); }
   if (!abierto) {
     await cargarEstado({ doc, objetos: [] });
     reiniciarHistoria();
@@ -966,10 +1024,15 @@ async function abrirProyecto(archivo) {
 async function traerFirma() {
   let svg = '';
   try { svg = localStorage.getItem('casadrew_firma_pendiente') || ''; localStorage.removeItem('casadrew_firma_pendiente'); } catch {}
+  let nombre = 'Firma';
+  // Otras pantallas (por ejemplo el generador de QR) dejan aquí un SVG para añadirlo al diseño.
+  if (!svg) {
+    try { const x = JSON.parse(localStorage.getItem('casadrew_insertar') || 'null'); localStorage.removeItem('casadrew_insertar'); if (x) ({ svg, nombre } = x); } catch {}
+  }
   if (!svg) return;
   if ($('#dNuevo').open) $('#dNuevo').close();
   const { objects, options } = await F.loadSVGFromString(svg);
   const g = F.util.groupSVGElements(objects.filter(Boolean), options);
-  g.scale(Math.min(1, doc.w * .5 / g.width, doc.h * .3 / g.height));
-  colocar(g, 'Firma');
+  g.scale(Math.min(1, doc.w * .5 / g.width, doc.h * .5 / g.height));
+  colocar(g, nombre);
 }

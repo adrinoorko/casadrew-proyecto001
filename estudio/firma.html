@@ -6,8 +6,8 @@
 <meta name="theme-color" content="#1a1a1a">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>CASADREW · Firma</title>
-<link rel="stylesheet" href="estilo.css">
-<script>try{const a=JSON.parse(localStorage.getItem('casadrew_apariencia')||'{}');if(a.tema)document.documentElement.dataset.tema=a.tema;if(a.acento)document.documentElement.style.setProperty('--acento',a.acento);}catch{}</script>
+<link rel="stylesheet" href="estilo.css?v=5">
+<script>try{const a=JSON.parse(localStorage.getItem('casadrew_apariencia')||'{}');const t=('tema' in a)?a.tema:'cristal';if(t)document.documentElement.dataset.tema=t;if(a.acento)document.documentElement.style.setProperty('--acento',a.acento);}catch{}</script>
 <style>
   .hoja { flex:1; position:relative; background:var(--mesa); touch-action:none; -webkit-touch-callout:none; padding:16px; display:flex; }
   .papel { flex:1; position:relative; background:#fff; border-radius:14px; box-shadow:0 8px 28px rgba(0,0,0,.12); overflow:hidden; }
@@ -24,7 +24,7 @@
 </head>
 <body>
 <header class="barra">
-  <a class="marca" href="./" title="Volver al estudio">CASA<span>DREW</span></a>
+  <a class="marca" href="editor.html" title="Volver al estudio">CASA<span>DREW</span></a>
   <strong>Firma</strong>
   <div class="grupo">
     <button id="bDeshacer" title="Deshacer el último trazo"><svg><use href="#i-deshacer"/></svg></button>
@@ -59,8 +59,8 @@
   <symbol id="i-rehacer" viewBox="0 0 24 24"><path d="M15 14l5-5-5-5m5 5H9.5a5.5 5.5 0 000 11H13"/></symbol>
 </defs></svg>
 
-<script src="lib/perfect-freehand-1.2.2.js"></script>
-<script src="trazo.js"></script>
+<script src="lib/perfect-freehand-1.2.2.js?v=5"></script>
+<script src="trazo.js?v=5"></script>
 <script>
 'use strict';
 const $ = s => document.querySelector(s);
@@ -189,7 +189,7 @@ $('#bSvg').onclick = () => {
 $('#bUsar').onclick = () => {
   if (!hayFirma()) return;
   try { localStorage.setItem('casadrew_firma_pendiente', aSVG()); } catch { return $('#estado').textContent = 'No se pudo pasar la firma al diseño.'; }
-  location.href = './';
+  location.href = 'editor.html';
 };
 </script>
 </body>

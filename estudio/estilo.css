@@ -9,7 +9,7 @@
 }
 * { box-sizing:border-box; margin:0; }
 html, body { height:100%; }
-body { display:flex; flex-direction:column; background:var(--fondo); color:var(--texto); overflow:hidden;
+body { display:flex; flex-direction:column; background:var(--fondo-cuerpo, var(--fondo)); background-attachment:fixed; color:var(--texto); overflow:hidden;
        font:14px/1.35 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; -webkit-user-select:none; user-select:none; }
 [hidden] { display:none !important; }
 button { font:inherit; color:inherit; background:transparent; border:0; border-radius:8px; cursor:pointer;
@@ -179,3 +179,35 @@ html[data-tema="grafito"] { --fondo:#1b1b1d; --tarjeta:#232326; --texto:#f0f0f2;
   .submenu { min-width:220px; }
   .submenu button { height:40px; }
 }
+
+/* ---------- Temas nuevos: Cristal, Vivo, Minimal, Oficina ---------- */
+html[data-tema="cristal"] { --fondo:rgba(255,255,255,.55); --tarjeta:rgba(255,255,255,.62); --texto:#1d1b2b; --suave:#5d5873; --linea:rgba(255,255,255,.75);
+  --acento:#7b5cd6; --mesa:#e4def3; --hover:rgba(255,255,255,.7); --peligro:#b3261e; color-scheme:light;
+  --fondo-cuerpo: radial-gradient(circle at 12% 18%, #ffd1e8 0, transparent 38%), radial-gradient(circle at 85% 10%, #c9d8ff 0, transparent 40%),
+                  radial-gradient(circle at 70% 85%, #d6f5e9 0, transparent 42%), radial-gradient(circle at 20% 90%, #ffe6c7 0, transparent 40%), #efeaf8; }
+html[data-tema="cristal"] :is(.barra, .menubar, .herramientas, .panel, .pie, .lateral, .tarjeta-v, dialog, .submenu, .menu) {
+  -webkit-backdrop-filter:blur(18px) saturate(1.5); backdrop-filter:blur(18px) saturate(1.5); box-shadow:0 8px 30px rgba(80,60,140,.08); }
+html[data-tema="cristal"] dialog { background:rgba(255,255,255,.82); }
+html[data-tema="vivo"] { --fondo:#fff7fb; --tarjeta:#ffffff; --texto:#22122a; --suave:#7a5c7f; --linea:#f6dceb; --acento:#ff3d7f; --mesa:#fde9f2; --hover:#ffeaf3; --peligro:#c0182c; color-scheme:light;
+  --fondo-cuerpo: linear-gradient(135deg, #fff1f7 0%, #fff6ea 50%, #eef5ff 100%); }
+html[data-tema="vivo"] button.principal, html[data-tema="vivo"] .boton-grande { background:linear-gradient(135deg,#ff3d7f,#ff8a3d); }
+html[data-tema="vivo"] .menubar { border-top:3px solid transparent; border-image:linear-gradient(90deg,#ff3d7f,#ff8a3d,#3d8bff) 1; }
+html[data-tema="minimal"] { --fondo:#ffffff; --tarjeta:#ffffff; --texto:#111111; --suave:#6b6b6b; --linea:#ececec; --acento:#111111; --mesa:#f3f3f3; --hover:#f4f4f4; --peligro:#b3261e; color-scheme:light; }
+html[data-tema="minimal"] .menubar { border-top-width:0; }
+html[data-tema="oficina"] { --fondo:#f3f4f6; --tarjeta:#ffffff; --texto:#1f2328; --suave:#5f6672; --linea:#dfe3e8; --acento:#2b579a; --mesa:#e6e9ee; --hover:#eaf0f8; --peligro:#b3261e; color-scheme:light; }
+html[data-tema="oficina"] .menubar { background:var(--acento); border-top:0; }
+html[data-tema="oficina"] .menubar .titulo { color:#fff; }
+html[data-tema="oficina"] .menubar .titulo:hover, html[data-tema="oficina"] .menu-principal.abierto > .titulo { background:rgba(255,255,255,.18); }
+.muestra[data-muestra-tema="cristal"] { background:linear-gradient(135deg,#ffd1e8,#c9d8ff 50%,#7b5cd6 50%); }
+.muestra[data-muestra-tema="vivo"] { background:linear-gradient(135deg,#ff3d7f,#ff8a3d 50%,#3d8bff 50%); }
+.muestra[data-muestra-tema="minimal"] { background:linear-gradient(135deg,#ffffff 50%,#111111 50%); }
+.muestra[data-muestra-tema="oficina"] { background:linear-gradient(135deg,#f3f4f6 50%,#2b579a 50%); }
+
+/* ---------- Burbujas de ayuda ---------- */
+.burbuja { position:fixed; z-index:100; max-width:260px; padding:7px 10px; border-radius:9px; font-size:.8rem; line-height:1.35;
+           background:#1d1b22; color:#fff; box-shadow:0 8px 24px rgba(0,0,0,.25); pointer-events:none; }
+.ayuda-i { display:inline-flex; align-items:center; justify-content:center; width:17px; height:17px; border-radius:50%; font-size:.7rem; font-weight:700;
+           background:var(--hover); color:var(--suave); border:1px solid var(--linea); cursor:help; flex:none; }
+.inicio-b { display:inline-flex; align-items:center; justify-content:center; width:36px; height:36px; border-radius:10px; color:var(--texto); }
+.inicio-b:hover { background:var(--hover); }
+.inicio-b svg { width:21px; height:21px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }

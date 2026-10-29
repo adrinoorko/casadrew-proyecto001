@@ -2,24 +2,8 @@
 // Cada opción: { t: texto, k: atajo, f: acción, si: () => se puede usar, marca: () => está activada, sub: [...] }; '-' es una línea.
 'use strict';
 
-const TEMAS = [
-  { id: 'arena', n: 'Arena (claro)' }, { id: 'noche', n: 'Noche (oscuro)' }, { id: 'lavanda', n: 'Lavanda' },
-  { id: 'menta', n: 'Menta' }, { id: 'coral', n: 'Coral' }, { id: 'rosa', n: 'Rosa' },
-  { id: 'oceano', n: 'Océano (oscuro)' }, { id: 'grafito', n: 'Grafito (oscuro)' },
-];
-const ACENTOS = [
-  { c: '', n: 'El del tema' }, { c: '#c8643b', n: 'Terracota' }, { c: '#d63d86', n: 'Fucsia' }, { c: '#7b5cd6', n: 'Violeta' },
-  { c: '#2f7fe0', n: 'Azul' }, { c: '#1f9e74', n: 'Verde' }, { c: '#c99a2e', n: 'Dorado' }, { c: '#d64545', n: 'Rojo' },
-];
-const apariencia = Trazo.ajustes('casadrew_apariencia', { tema: '', acento: '' });
-function aplicarApariencia() {
-  const html = document.documentElement;
-  if (apariencia.tema) html.dataset.tema = apariencia.tema; else delete html.dataset.tema;
-  if (apariencia.acento) html.style.setProperty('--acento', apariencia.acento); else html.style.removeProperty('--acento');
-  canvas.requestRenderAll();
-}
-function cambiarApariencia(c) { Object.assign(apariencia, c); Trazo.guardarAjustes('casadrew_apariencia', apariencia); aplicarApariencia(); }
-aplicarApariencia();
+const { TEMAS, ACENTOS, apariencia, cambiarApariencia } = Comun;
+document.addEventListener('casadrew:tema', () => canvas.requestRenderAll());
 
 const haySel = () => activos().length > 0;
 const hayVarios = () => activos().length > 1;

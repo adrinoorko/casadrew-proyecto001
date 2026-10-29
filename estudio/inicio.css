@@ -147,3 +147,7 @@ label.chk { display:flex; align-items:center; gap:8px; }
   .qr { grid-template-columns:1fr; }
   .qr-vista { position:static; }
 }
+.subtitulo { color:var(--suave); margin:-6px 0 16px; max-width:760px; }
+#biblioInicio .buscador { max-width:520px; height:44px; }
+#biblioInicio .biblio-cats { flex-wrap:wrap; }
+#biblioInicio .ficha-el { background:var(--tarjeta); }

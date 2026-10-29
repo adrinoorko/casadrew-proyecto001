@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#1a1a1a">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>CASADREW · Estudio</title>
-<link rel="stylesheet" href="estilo.css?v=9">
+<link rel="stylesheet" href="estilo.css?v=10">
 <script>try{const a=JSON.parse(localStorage.getItem('casadrew_apariencia')||'{}');const t=('tema' in a)?a.tema:'cristal';if(t)document.documentElement.dataset.tema=t;if(a.acento)document.documentElement.style.setProperty('--acento',a.acento);}catch{}</script>
 </head>
 <body>
@@ -46,6 +46,8 @@
     <symbol id="i-recortar" viewBox="0 0 24 24"><path d="M6 2v14a2 2 0 002 2h14M2 6h14a2 2 0 012 2v14"/></symbol>
     <symbol id="i-varita" viewBox="0 0 24 24"><path d="M4 20L15 9M17 3v3M20.5 4.5l-2 2M21 9h-3M13 4.5l2 2"/></symbol>
     <symbol id="i-ia" viewBox="0 0 24 24"><path d="M12 3l1.8 4.6L18 9l-4.2 1.4L12 15l-1.8-4.6L6 9l4.2-1.4zM19 14l.9 2.1L22 17l-2.1.9L19 20l-.9-2.1L16 17l2.1-.9zM5 15l.7 1.6L7.3 17l-1.6.7L5 19.3l-.7-1.6L2.7 17l1.6-.7z"/></symbol>
+    <symbol id="i-elementos" viewBox="0 0 24 24"><circle cx="7" cy="7" r="4"/><path d="M14 3h7v7h-7zM7 13l4.5 8h-9z"/><path d="M17.5 13l1.2 2.5 2.8.4-2 2 .5 2.8-2.5-1.3-2.5 1.3.5-2.8-2-2 2.8-.4z"/></symbol>
+    <symbol id="i-plantillas" viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="10" rx="1.5"/><rect x="13" y="3" width="8" height="6" rx="1.5"/><rect x="13" y="11" width="8" height="10" rx="1.5"/><rect x="3" y="15" width="8" height="6" rx="1.5"/></symbol>
     <symbol id="i-ajustes" viewBox="0 0 24 24"><path d="M4 6h10m4 0h2M4 12h4m4 0h8M4 18h12m4 0h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></symbol>
   </defs>
 </svg>
@@ -81,6 +83,9 @@
     <button data-herr="escritura" title="Modo escritura: escribe a mano y conviértelo en texto bonito y editable (W)"><svg><use href="#i-escritura"/></svg></button>
     <button data-herr="borrador" title="Borrar trazos dibujados (X)"><svg><use href="#i-borrador"/></svg></button>
     <button id="bFirma" title="Crear una firma"><svg><use href="#i-firma"/></svg></button>
+    <span class="sep"></span>
+    <button id="bElementos" title="Elementos: formas, iconos, moda, marcos, neón, 3D, texturas… Tócalo para añadirlo o arrástralo al lienzo"><svg><use href="#i-elementos"/></svg></button>
+    <button id="bPlantillas" title="Plantillas: diseños listos para editar"><svg><use href="#i-plantillas"/></svg></button>
     <span class="sep"></span>
     <button data-crear="texto" title="Texto (T)"><svg><use href="#i-texto"/></svg></button>
     <button data-crear="rect" title="Rectángulo (R)"><svg><use href="#i-rect"/></svg></button>
@@ -309,17 +314,20 @@
 <input id="fImagen" type="file" accept="image/*,.svg" multiple hidden>
 <input id="fProyecto" type="file" accept=".casadrew,.json,application/json" hidden>
 
-<script src="lib/fabric-6.7.1.min.js?v=9"></script>
-<script src="lib/perfect-freehand-1.2.2.js?v=9"></script>
-<script src="trazo.js?v=9"></script>
-<script src="comun.js?v=9"></script>
-<script src="almacen.js?v=9"></script>
-<script src="plantillas.js?v=9"></script>
-<script src="editor.js?v=9"></script>
-<script src="menus.js?v=9"></script>
-<script src="capas.js?v=9"></script>
-<script src="degradados.js?v=9"></script>
-<script src="escritura.js?v=9"></script>
-<script src="imagen.js?v=9"></script>
+<script src="lib/fabric-6.7.1.min.js?v=10"></script>
+<script src="lib/perfect-freehand-1.2.2.js?v=10"></script>
+<script src="trazo.js?v=10"></script>
+<script src="comun.js?v=10"></script>
+<script src="almacen.js?v=10"></script>
+<script src="plantillas.js?v=10"></script>
+<script src="editor.js?v=10"></script>
+<script src="menus.js?v=10"></script>
+<script src="capas.js?v=10"></script>
+<script src="degradados.js?v=10"></script>
+<script src="escritura.js?v=10"></script>
+<script src="imagen.js?v=10"></script>
+<script src="elementos.js?v=10"></script>
+<script src="biblioteca.js?v=10"></script>
+<script src="cajon.js?v=10"></script>
 </body>
 </html>

@@ -6,8 +6,8 @@
 <meta name="theme-color" content="#1a1a1a">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>CASADREW · Inicio</title>
-<link rel="stylesheet" href="estilo.css?v=9">
-<link rel="stylesheet" href="inicio.css?v=9">
+<link rel="stylesheet" href="estilo.css?v=10">
+<link rel="stylesheet" href="inicio.css?v=10">
 <script>try{const a=JSON.parse(localStorage.getItem('casadrew_apariencia')||'{}');const t=('tema' in a)?a.tema:'cristal';if(t)document.documentElement.dataset.tema=t;if(a.acento)document.documentElement.style.setProperty('--acento',a.acento);}catch{}</script>
 </head>
 <body class="inicio">
@@ -89,10 +89,8 @@
   <!-- ELEMENTOS -->
   <section data-vista="elementos" hidden>
     <header class="cabecera"><h1>Elementos</h1></header>
-    <div class="aviso-grande">
-      <h2>La biblioteca de elementos llega en la próxima entrega</h2>
-      <p>Iconos, formas, marcos, texturas, recursos de moda y componentes web, con buscador y para arrastrar al lienzo. Mientras tanto, en el editor tienes formas, texto, imágenes y pincel.</p>
-    </div>
+    <p class="subtitulo">Toca un elemento para añadirlo a tu último diseño. Dentro del editor también puedes arrastrarlos al lienzo (botón <b>Elementos</b> de la barra izquierda).</p>
+    <div id="biblioInicio"></div>
   </section>
 
   <!-- QR -->
@@ -194,12 +192,14 @@
 <div class="menu" id="menuTarjeta" hidden></div>
 <input id="fProyecto" type="file" accept=".casadrew,.json,application/json" hidden>
 
-<script src="lib/fabric-6.7.1.min.js?v=9"></script>
-<script src="lib/qrcode-generator-1.4.4.js?v=9"></script>
-<script src="lib/jsqr-1.4.0.js?v=9"></script>
-<script src="comun.js?v=9"></script>
-<script src="almacen.js?v=9"></script>
-<script src="plantillas.js?v=9"></script>
-<script src="inicio.js?v=9"></script>
+<script src="lib/fabric-6.7.1.min.js?v=10"></script>
+<script src="lib/qrcode-generator-1.4.4.js?v=10"></script>
+<script src="lib/jsqr-1.4.0.js?v=10"></script>
+<script src="comun.js?v=10"></script>
+<script src="almacen.js?v=10"></script>
+<script src="plantillas.js?v=10"></script>
+<script src="elementos.js?v=10"></script>
+<script src="biblioteca.js?v=10"></script>
+<script src="inicio.js?v=10"></script>
 </body>
 </html>

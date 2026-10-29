@@ -91,7 +91,11 @@ canvas.on('after:render', ({ ctx }) => {
 const pasoRejilla = () => { const p = Math.max(doc.w, doc.h) / 24; const m = 10 ** Math.floor(Math.log10(p)); return [1, 2, 5, 10].map(k => k * m).find(k => k >= p); };
 
 function medirMesa() {
-  canvas.setDimensions({ width: mesa.clientWidth, height: mesa.clientHeight });
+  const w0 = canvas.width, h0 = canvas.height, w = mesa.clientWidth, h = mesa.clientHeight;
+  if (w === w0 && h === h0) return;
+  canvas.setDimensions({ width: w, height: h });
+  // Al abrir o cerrar un panel, la página se queda en el centro de lo que se ve.
+  if (w0 > 50 && h0 > 50 && w0 !== 300) canvas.relativePan(new F.Point((w - w0) / 2, (h - h0) / 2));
   canvas.requestRenderAll();
 }
 new ResizeObserver(() => { const primera = canvas.width < 50 || canvas.height < 50 || canvas.width === 300; medirMesa(); if (primera) ajustarVista(); }).observe(mesa);
@@ -998,6 +1002,7 @@ async function abrirProyecto(archivo) {
   ajustarVista();
   ponerEstado(abierto ? 'Diseño recuperado' : 'Listo');
   await traerFirma();
+  await Cajon.traerPendiente();
 })();
 
 // Firma hecha en firma.html y enviada con «Usar en mi diseño».

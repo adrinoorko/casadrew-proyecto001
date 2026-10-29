@@ -358,4 +358,15 @@ PINTAR.ajustes = async () => {
 };
 
 pintarPerfil();
+// ---------- Elementos ----------
+let biblioInicio = null;
+PINTAR.elementos = () => {
+  if (biblioInicio) return;
+  biblioInicio = Biblioteca.montar($('#biblioInicio'), { columnas: 'grande', porFila: 10, alElegir: e => {
+    try { localStorage.setItem('casadrew_elemento_pendiente', e.id); } catch {}
+    const ultimo = Almacen.ultimo();
+    abrirEditor(ultimo ? { id: ultimo } : { nuevo: 1, w: 1080, h: 1080, nombre: 'Diseño con ' + e.n });
+  } });
+};
+
 ir();

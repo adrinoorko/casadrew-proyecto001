@@ -1,5 +1,32 @@
 # CASADREW Estudio — Lo que falta y nuevas ideas
 
+## Estado tras el rediseño (fase 1) — 29 de octubre de 2026, versión 0.5
+
+Leyenda: ✅ hecho y probado · 🟡 hecho con límites · ⬜ pendiente
+
+| Apartado | Estado | Qué hay |
+|---|---|---|
+| Pantalla de inicio | ✅ | Continuar, proyectos (favoritos, papelera, duplicar), plantillas, categorías, Elementos, QR, usuarios, ajustes. El editor ya no se abre solo. |
+| Temas | ✅ | Cristal, Vivo, Minimal, Oficina (+8 de color). Se recuerdan. Ayudas emergentes en los botones. |
+| Lentitud | ✅ | Causa medida: cada paso del historial copiaba las fotos (12,8 MB por paso). Ahora fotos y fotogramas se guardan una sola vez (≈2 KB por paso). En reposo: 0 tareas en segundo plano. |
+| Capas | ✅ | Panel siempre visible y redimensionable, miniaturas, arrastrar para cambiar el orden real, ojo, candado, opacidad con %, renombrar, duplicar, grupos desplegables, resaltado en el lienzo. |
+| Dibujo / escritura | 🟡 | Dibujo libre con presión del Pencil (nunca convierte nada). Escritura: el iPad convierte la letra a texto con Garabatear (Scribble), en el aparato; o «Mi letra» para guardarla tal cual. **Límite:** no se guarda la letra original del texto convertido (el navegador no da acceso a esos trazos). |
+| Recorte, varita, quitar fondo | ✅ | Recorte con proporciones y medidas, varita con tolerancia y suavizado, quitar fondo con IA local (U²-Net, 4,4 MB, sin internet), restaurar original. |
+| Degradados | ✅ | Lineal y radial, paradas editables con opacidad, ángulo, 12 preajustes; en formas, textos y fondo de página. |
+| Elementos | ✅ | ~2.500 iconos (Tabler, MIT) + ~200 recursos originales: formas, moda (prendas planas, detalles, accesorios), marcos, stickers, ilustraciones, neón, 3D, degradados, telas y texturas, fondos, efectos, líneas, componentes web. Buscador en español, tocar o arrastrar al lienzo, cambiar colores. Procedencia en `estudio/recursos/PROCEDENCIA.md`. |
+| Plantillas | ✅ | 18 plantillas editables (también desde el editor, en el cajón). |
+| QR | ✅ | Se comprueba que se lee antes de descargar. |
+| Exportar | ✅ | **Exprés** (un clic; elige formato; presets redes, web, imprimir, sin fondo) y **Avanzada** (PNG/JPG/WebP con ppp dentro del archivo, PDF a tamaño real con sangrado 3 mm y marcas de corte, SVG, GIF, vídeo, proyecto; vista previa, peso aproximado, avisos de fuentes, recortes, resolución, márgenes). **Límite:** PDF de imagen (no vectorial) y sin CMYK. |
+| Animación | ✅ | Fotogramas con miniaturas, añadir/copiar/borrar/reordenar, papel cebolla, capas fijas 📌, 4–30 fps, repetir, reproducir, 12 movimientos automáticos, exportar GIF y vídeo (MP4/WebM). |
+| Perspectiva y 3D | 🟡 | Inclinar, girar, rotar con cámara, volumen con luz, deformar por esquinas, 8 preajustes; texto, formas e imágenes; no destructivo. **Límite:** no es 3D de verdad con modelos (eso sería la fase 3D con Three.js) ni composición tipo After Effects. |
+
+**Siguiente:** figurines de moda, PDF vectorial, fuentes propias, pinceles con textura, girar lienzo, lazo, guardar en carpetas del PC y pasar diseños al iPad.
+
+---
+
+*Debajo queda la lista original, como referencia histórica.*
+
+
 29 de octubre de 2026 · Lista completa para Adriana
 
 ## 1. Lo que ya está hecho

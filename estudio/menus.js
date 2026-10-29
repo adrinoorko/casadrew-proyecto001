@@ -68,8 +68,18 @@ const MENUS = [
     ] },
     { t: 'Imagen…', f: () => $('#fImagen').click() },
     { t: 'Firma…', f: () => $('#bFirma').click() },
+    '-',
+    { t: 'Elementos (iconos, moda, marcos, neón, 3D…)', f: () => Cajon.abrir('elementos') },
+    { t: 'Plantilla…', f: () => Cajon.abrir('plantillas') },
   ] },
   { t: 'Elemento', sub: [
+    { t: 'Perspectiva y 3D', si: haySel, sub: [
+      ...[['volumen', 'Texto 3D (volumen)'], ['bloque', 'Bloque'], ['epico', 'Título épico'], ['suelo', 'Tumbado'], ['izquierda', 'Pared izquierda'], ['derecha', 'Pared derecha'], ['isometrico', 'Isométrico'], ['plano', 'Plano']]
+        .map(([k, t]) => ({ t, f: () => Perspectiva.convertir(canvas.getActiveObject(), Perspectiva.PRESETS[k]) })),
+      '-',
+      { t: 'Editar el original', si: () => !!canvas.getActiveObject()?.fuente3d, f: () => Perspectiva.editarOriginal(canvas.getActiveObject()) },
+      { t: 'Quitar el 3D', si: () => !!canvas.getActiveObject()?.fuente3d, f: () => Perspectiva.editarOriginal(canvas.getActiveObject(), true) },
+    ] },
     { t: 'Organizar', si: haySel, sub: [
       { t: 'Traer al frente', k: 'Ctrl+⇧+]', f: ACCIONES.frente }, { t: 'Traer adelante', k: 'Ctrl+]', f: ACCIONES.adelante },
       { t: 'Enviar atrás', k: 'Ctrl+[', f: ACCIONES.atras }, { t: 'Enviar al fondo', k: 'Ctrl+⇧+[', f: ACCIONES.fondo },
@@ -141,6 +151,17 @@ const MENUS = [
     { t: 'Tipo de pincel', sub: Object.entries(Trazo.PINCELES).map(([clave, p]) => ({ t: p.n,
       f: () => { ponerHerramienta('pincel'); $(`#pinceles [data-pincel=${clave}]`).click(); }, marca: () => pincelAj.pincel === clave })) },
     { t: 'Motores de IA…', f: () => $('#dIA').showModal() },
+    '-',
+    { t: 'Animación', sub: [
+      { t: 'Activar o ver la línea de tiempo', f: () => $('#bAnimacion').click() },
+      { t: 'Fotograma nuevo vacío', si: () => Animacion.activa(), f: () => Animacion.anadir(false) },
+      { t: 'Copiar el fotograma', si: () => Animacion.activa(), f: () => Animacion.anadir(true) },
+      { t: 'Fotograma anterior', k: ',', si: () => Animacion.activa(), f: () => $('#tAnterior').click() },
+      { t: 'Fotograma siguiente', k: '.', si: () => Animacion.activa(), f: () => $('#tSiguiente').click() },
+      { t: 'Reproducir / parar', si: () => Animacion.activa(), f: () => Animacion.reproducir() },
+      '-',
+      { t: 'Quitar la animación', si: () => Animacion.activa(), f: () => Animacion.quitar() },
+    ] },
     { t: 'Solo el lápiz dibuja', f: () => cambiarPincel({ soloLapiz: !pincelAj.soloLapiz }), marca: () => pincelAj.soloLapiz },
   ] },
   { t: 'Ayuda', sub: [

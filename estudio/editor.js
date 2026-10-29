@@ -5,6 +5,8 @@
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
 const F = fabric;
+const ES_PROGRAMA = location.protocol === 'casadrew:';
+if (ES_PROGRAMA) $('.marca').removeAttribute('href');
 
 // Propiedades propias que se guardan con cada elemento.
 const EXTRA = ['id', 'nombre', 'bloqueado', 'lockMovementX', 'lockMovementY', 'lockScalingX', 'lockScalingY', 'lockRotation', 'hasControls', 'trazo', 'perPixelTargetFind'];

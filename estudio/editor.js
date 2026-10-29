@@ -332,6 +332,7 @@ function serializar() {
 function serializarCompleto() {
   const datos = serializar();
   recorrerImagenes(datos.objetos, o => { if (o.src.startsWith(REF)) o.src = imagenes.get(o.imgRef) || ''; });
+  if (datos.doc.anim && typeof Animacion !== 'undefined') datos.doc.anim = Animacion.enLinea(datos.doc.anim);
   return datos;
 }
 async function registrarImagen(data) {
@@ -381,6 +382,7 @@ async function cargarEstado(e, recolocar = true) {
   try {
     canvas.discardActiveObject();
     doc = { ...e.doc, id: e.doc?.id || doc.id };
+    if (doc.anim && typeof Animacion !== 'undefined') await Animacion.prepararDoc(doc);
     await prepararImagenes(e.objetos);
     await canvas.loadFromJSON({ objects: e.objetos || [] });
     canvas.getObjects().forEach(o => { if (!o.id) o.id = nuevoId(); });
@@ -738,7 +740,7 @@ const aHex = c => {
   if (!c || typeof c !== 'string') return '#000000';
   try { return '#' + new F.Color(c).toHex().slice(0, 6); } catch { return '#000000'; }
 };
-function refrescarTodo() { refrescarPanel(); refrescarCapas(); $('#nombreDoc').value = doc.nombre; $('#infoDoc').textContent = `${doc.w} × ${doc.h} px`; }
+function refrescarTodo() { refrescarPanel(); refrescarCapas(); $('#nombreDoc').value = doc.nombre; $('#infoDoc').textContent = `${doc.w} × ${doc.h} px`; document.dispatchEvent(new Event('casadrew:refrescar')); }
 
 function refrescarPanel() {
   const objs = activos(), o = canvas.getActiveObject();

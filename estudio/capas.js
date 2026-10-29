@@ -57,7 +57,8 @@ function filaCapa(o, { profundidad = 0, seleccionada = false, unica = false, hij
     <span class="nom"></span>
     ${opac < 100 ? `<span class="pct" title="Opacidad: ${opac} %">${opac}%</span>` : ''}
     <button class="ojo ${o.visible ? '' : 'on'}" title="${o.visible ? 'Ocultar' : 'Mostrar'}">${ICONO(o.visible ? 'i-ojo' : 'i-ojo-no')}</button>
-    ${hija ? '' : `<button class="candado ${o.bloqueado ? 'on' : ''}" title="${o.bloqueado ? 'Desbloquear' : 'Bloquear (no se podrá mover)'}">${ICONO(o.bloqueado ? 'i-candado' : 'i-candado-no')}</button>`}`;
+    ${hija ? '' : `<button class="candado ${o.bloqueado ? 'on' : ''}" title="${o.bloqueado ? 'Desbloquear' : 'Bloquear (no se podrá mover)'}">${ICONO(o.bloqueado ? 'i-candado' : 'i-candado-no')}</button>`}
+    ${!hija && typeof Animacion !== 'undefined' && Animacion.activa() ? `<button class="fijar ${o.fijo ? 'on' : ''}" title="${o.fijo ? 'Capa fija: se ve en todos los fotogramas. Toca para que sea solo de este' : 'Fijar: que se vea en todos los fotogramas (fondos, escenarios)'}">📌</button>` : ''}`;
   li.querySelector('.mini-capa').src = miniaturaCapa(o);
   const nom = li.querySelector('.nom');
   nom.textContent = nombreCapa(o);
@@ -71,6 +72,8 @@ function filaCapa(o, { profundidad = 0, seleccionada = false, unica = false, hij
     canvas.requestRenderAll(); registrar();
   };
   li.querySelector('.candado')?.addEventListener('click', e => { e.stopPropagation(); ponerBloqueo(o, !o.bloqueado); registrar(); });
+  li.querySelector('.fijar')?.addEventListener('click', e => { e.stopPropagation(); Animacion.fijar(o); });
+  if (o.fijo && typeof Animacion !== 'undefined' && Animacion.activa()) li.classList.add('fija');
   li.querySelector('.abrir-grupo')?.addEventListener('click', e => { e.stopPropagation(); gruposAbiertos.has(o) ? gruposAbiertos.delete(o) : gruposAbiertos.add(o); refrescarCapas(); });
   li.onclick = e => {
     if (hija) return reseleccionar([padre]);
